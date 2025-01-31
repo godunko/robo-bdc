@@ -165,7 +165,45 @@ is
          TIM.CCMR1_Output := Aux;
       end;
 
-      --  Configure CCMR2  --  Not used yet
+      --  Configure CCMR2
+
+      declare
+         Aux : CCMR2_Output_Register := TIM.CCMR2_Output;
+
+      begin
+         Aux.CC3S  := 2#00#;  --  00: CC3 channel is configured as output.
+         Aux.OC3FE := False;
+         --  0: CC3 behaves normally depending on counter and CCR2 values even
+         --  when the trigger is ON. The minimum delay to activate CC3 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC3PE := True;
+         --  1: Preload register on TIMx_CCR3 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR3 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC3M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 3 is active as long as
+         --  TIMx_CNT<TIMx_CCR3 else inactive. In downcounting, channel 1 is
+         --  inactive (OC3REF=‘0) as long as TIMx_CNT>TIMx_CCR3 else active
+         --  (OC3REF=1).
+         Aux.OC3CE := False;  --  0: OC3Ref is not affected by the ETRF input
+         Aux.CC4S  := 2#00#;  --  00: CC4 channel is configured as output
+         Aux.OC4FE := False;
+         --  0: CC4 behaves normally depending on counter and CCR4 values even
+         --  when the trigger is ON. The minimum delay to activate CC4 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC4PE := True;
+         --  1: Preload register on TIMx_CCR4 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR4 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC4M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 4 is active as long as
+         --  TIMx_CNT<TIMx_CCR4 else inactive. In downcounting, channel 4 is
+         --  inactive (OC4REF=‘0) as long as TIMx_CNT>TIMx_CCR4 else active
+         --  (OC4REF=1).
+         Aux.OC4CE := False; --  0: OC4Ref is not affected by the ETRF input
+
+         TIM.CCMR2_Output := Aux;
+      end;
 
       --  Configure CCER
 
