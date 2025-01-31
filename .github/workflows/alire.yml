@@ -21,6 +21,10 @@ jobs:
       with:
         repository: godunko/a0b-stm32f401-usart
         path: a0b-stm32f401-usart
+    - uses: actions/checkout@v4
+      with:
+        repository: godunko/light-startup
+        path: light-startup
     - uses: alire-project/setup-alire@v3
     - name: Build project
       run: alr -C robo-bdc build
