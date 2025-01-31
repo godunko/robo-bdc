@@ -1,3 +1,5 @@
+[![Build status](https://github.com/godunko/robo-bdc/actions/workflows/alire.yml/badge.svg)](https://github.com/godunko/robo-bdc/actions/workflows/alire.yml)
+
 # **Robo BDC** - Brushed DC Motors Controller
 
 Many robots, especially legged robots, require the control of numerous servomotors.
