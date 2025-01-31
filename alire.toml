@@ -1,0 +1,22 @@
+name = "robo_bdc"
+description = "Robo-BDC: Brushed DC Motors Controller"
+version = "0.1.0-dev"
+
+authors = ["Vadim Godunko"]
+maintainers = ["Vadim Godunko <vgodunko@gmail.com>"]
+maintainers-logins = ["godunko"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+tags = ["embedded", "robotics"]
+
+project-files = ["gnat/robo_bdc.gpr"]
+
+[configuration]
+generate_ada = false
+generate_c = false
+generate_gpr = true
+
+[[depends-on]]
+light_blackpill_stm32f401 = "*"
+
+[[pins]]
+light_blackpill_stm32f401 = { path='../light-startup/blackpill_stm32f401' }

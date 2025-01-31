@@ -1,0 +1,37 @@
+--
+--  Copyright (C) 2025, Vadim Godunko <vgodunko@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
+with "../config/robo_bdc_config";
+
+with "light_blackpill_stm32f401";
+
+project Robo_BDC is
+
+   for Target use Light_Blackpill_STM32F401'Target;
+   for Runtime use Light_Blackpill_STM32F401'Runtime;
+
+   for Source_Dirs use ("../source");
+   for Object_Dir use "../.objs/";
+   for Exec_Dir use "../bin/";
+   for Main use ("driver.adb");
+
+   package Builder is
+      for Executable ("driver.adb") use "robo_bdc.elf";
+   end Builder;
+
+   package Compiler is
+      for Switches ("Ada") use
+       	Light_Blackpill_STM32F401.Compiler_Switches
+          & Robo_BDC_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Linker is
+      for Switches ("Ada") use
+        Light_Blackpill_STM32F401.Linker_Switches
+         & ("-Wl,--gc-sections");
+   end Linker;
+
+end Robo_BDC;
