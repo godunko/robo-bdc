@@ -4,7 +4,14 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with Configuration;
+with Console;
+
 procedure Driver is
 begin
-   null;
+   Configuration.Initialize;
+
+   Console.New_Line;
+   Console.Put_Line ("Robo DC Motors Controller");
+   Console.New_Line;
 end Driver;
