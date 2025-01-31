@@ -6,12 +6,14 @@
 
 package Motor_Drivers is
 
-   procedure Set_Forward;
+   type Motor_Index is range 1 .. 4;
 
-   procedure Set_Backward;
+   procedure Set_Forward (Motor : Motor_Index);
 
-   procedure Set_Break;
+   procedure Set_Backward (Motor : Motor_Index);
 
-   procedure Set_Off;
+   procedure Set_Break (Motor : Motor_Index);
+
+   procedure Set_Off (Motor : Motor_Index);
 
 end Motor_Drivers;
