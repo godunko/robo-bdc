@@ -1,4 +1,7 @@
 /.objs/
-/.vscode/
+/Makefile
 /alire/
+/bin/
 /config/
+/gdbinit
+/openocd.cfg
