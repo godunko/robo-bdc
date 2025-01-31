@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+        path: robo-bdc
     - uses: actions/checkout@v4
       with:
         repository: godunko/a0b-spi
-        path: ../a0b-spi
+        path: a0b-spi
     - uses: alire-project/setup-alire@v3
     - name: Build project
-      run: alr build
+      run: alr -C robo-bdc build
