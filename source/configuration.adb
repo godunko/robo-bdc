@@ -20,8 +20,27 @@ is
    --  1/1/3_360: PWM 25kHz CPU @84MHz (nominal for L298)
 
    procedure Initialize_TIM3;
+   --  Configure TIM3. Timer is disabled. It generates TRGO on CEN set.
+
+   procedure Initialize_TIM4;
+   --  Configure TIM4. Timer is disabled. It is configured to be triggered by
+   --  set of CEN of TIM3.
 
    procedure Initialize_UART;
+
+   procedure Enable_Timers;
+   --  Enable all timers.
+
+   -------------------
+   -- Enable_Timers --
+   -------------------
+
+   procedure Enable_Timers is
+   begin
+      A0B.STM32F401.SVD.TIM.TIM3_Periph.CR1.CEN := True;
+      --  Timers are configured in master-slave mode, so enable of TIM3 will
+      --  enable other timers too.
+   end Enable_Timers;
 
    ----------------
    -- Initialize --
@@ -31,6 +50,9 @@ is
    begin
       Initialize_UART;
       Initialize_TIM3;
+      Initialize_TIM4;
+
+      Enable_Timers;
    end Initialize;
 
    ---------------------
@@ -279,11 +301,246 @@ is
          Mode  => A0B.STM32F401.GPIO.Push_Pull,
          Speed => A0B.STM32F401.GPIO.Very_High,
          Pull  => A0B.STM32F401.GPIO.Pull_Up);
-
-      --  Enable timer
-
-      TIM.CR1.CEN := True;
    end Initialize_TIM3;
+
+   ---------------------
+   -- Initialize_TIM4 --
+   ---------------------
+
+   procedure Initialize_TIM4 is
+      use A0B.STM32F401.SVD.TIM;
+      use type A0B.Types.Unsigned_16;
+
+      TIM : TIM3_Peripheral renames TIM4_Periph;
+
+   begin
+      A0B.STM32F401.SVD.RCC.RCC_Periph.APB1ENR.TIM4EN := True;
+
+      --  Configure CR1
+
+      declare
+         Aux : A0B.STM32F401.SVD.TIM.CR1_Register := TIM.CR1;
+
+      begin
+         Aux.CEN  := False;  --  0: Counter disabled
+         Aux.UDIS := False;  --  0: UEV enabled
+         Aux.URS  := False;
+         --  0: Any of the following events generate an update interrupt or DMA
+         --  request if enabled.
+         --
+         --  These events can be:
+         --  – Counter overflow/underflow
+         --  – Setting the UG bit
+         --  – Update generation through the slave mode controller
+         Aux.OPM  := False;  --  0: Counter is not stopped at update event
+         Aux.DIR  := False;  --  0: Counter used as upcounter
+         Aux.CMS  := 2#00#;
+         --  00: Edge-aligned mode. The counter counts up or down depending on
+         --  the direction bit (DIR).
+         Aux.ARPE := True;   --  1: TIMx_ARR register is buffered
+         Aux.CKD  := Divider;
+
+         TIM.CR1 := Aux;
+      end;
+
+      --  Configure CR2
+
+      declare
+         Aux : CR2_Register_1 := TIM.CR2;
+
+      begin
+         --  Aux.CCDS := <>;  --  Not needed
+         --  Aux.MMS  := <>;  --  Not needed
+         Aux.TI1S := False;  --  0: The TIMx_CH1 pin is connected to TI1 input
+
+         TIM.CR2 := Aux;
+      end;
+
+      --  Configure SMCR
+
+      declare
+         Aux : SMCR_Register := TIM.SMCR;
+
+      begin
+         Aux.SMS  := 2#110#;
+         --  110: Trigger Mode - The counter starts at a rising edge of the
+         --  trigger TRGI (but it is not reset). Only the start of the counter
+         --  is controlled.
+         Aux.TS   := 2#010#;  --  010: Internal Trigger 2 (ITR2).
+         Aux.MSM  := True;
+         --  1: The effect of an event on the trigger input (TRGI) is delayed
+         --  to allow a perfect synchronization between the current timer and
+         --  its slaves (through TRGO). It is useful if we want to synchronize
+         --  several timers on a single external event.
+         --  Aux.ETF  := <>;  --  Not used
+         --  Aux.ETPS := <>;  --  Not used
+         --  Aux.ECE  := <>;  --  Not used
+         --  Aux.ETP  := <>;  --  Not used
+
+         TIM.SMCR := Aux;
+      end;
+
+      --  Configure DIER - Not used
+
+      --  XXX Reset SR by write 0?
+
+      --  Set EGR - Not used
+
+      --  Configure CCMR1
+
+      declare
+         Aux : CCMR1_Output_Register := TIM.CCMR1_Output;
+
+      begin
+         Aux.CC1S  := 2#00#;  --  00: CC1 channel is configured as output.
+         Aux.OC1FE := False;
+         --  0: CC1 behaves normally depending on counter and CCR1 values even
+         --  when the trigger is ON. The minimum delay to activate CC1 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC1PE := True;
+         --  1: Preload register on TIMx_CCR1 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR1 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC1M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 1 is active as long as
+         --  TIMx_CNT<TIMx_CCR1 else inactive. In downcounting, channel 1 is
+         --  inactive (OC1REF=‘0) as long as TIMx_CNT>TIMx_CCR1 else active
+         --  (OC1REF=1).
+         Aux.OC1CE := False;  --  0: OC1Ref is not affected by the ETRF input
+         Aux.CC2S  := 2#00#;  --  00: CC2 channel is configured as output
+         Aux.OC2FE := False;
+         --  0: CC2 behaves normally depending on counter and CCR2 values even
+         --  when the trigger is ON. The minimum delay to activate CC2 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC2PE := True;
+         --  1: Preload register on TIMx_CCR2 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR2 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC2M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 2 is active as long as
+         --  TIMx_CNT<TIMx_CCR2 else inactive. In downcounting, channel 2 is
+         --  inactive (OC2REF=‘0) as long as TIMx_CNT>TIMx_CCR2 else active
+         --  (OC2REF=1).
+         Aux.OC2CE := False; --  0: OC2Ref is not affected by the ETRF input
+
+         TIM.CCMR1_Output := Aux;
+      end;
+
+      --  Configure CCMR2
+
+      declare
+         Aux : CCMR2_Output_Register := TIM.CCMR2_Output;
+
+      begin
+         Aux.CC3S  := 2#00#;  --  00: CC3 channel is configured as output.
+         Aux.OC3FE := False;
+         --  0: CC3 behaves normally depending on counter and CCR2 values even
+         --  when the trigger is ON. The minimum delay to activate CC3 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC3PE := True;
+         --  1: Preload register on TIMx_CCR3 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR3 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC3M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 3 is active as long as
+         --  TIMx_CNT<TIMx_CCR3 else inactive. In downcounting, channel 1 is
+         --  inactive (OC3REF=‘0) as long as TIMx_CNT>TIMx_CCR3 else active
+         --  (OC3REF=1).
+         Aux.OC3CE := False;  --  0: OC3Ref is not affected by the ETRF input
+         Aux.CC4S  := 2#00#;  --  00: CC4 channel is configured as output
+         Aux.OC4FE := False;
+         --  0: CC4 behaves normally depending on counter and CCR4 values even
+         --  when the trigger is ON. The minimum delay to activate CC4 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC4PE := True;
+         --  1: Preload register on TIMx_CCR4 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR4 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC4M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 4 is active as long as
+         --  TIMx_CNT<TIMx_CCR4 else inactive. In downcounting, channel 4 is
+         --  inactive (OC4REF=‘0) as long as TIMx_CNT>TIMx_CCR4 else active
+         --  (OC4REF=1).
+         Aux.OC4CE := False; --  0: OC4Ref is not affected by the ETRF input
+
+         TIM.CCMR2_Output := Aux;
+      end;
+
+      --  Configure CCER
+
+      declare
+         Aux : CCER_Register_1 := TIM.CCER;
+
+      begin
+         Aux.CC1E  := True;
+         --  1: On - OC1 signal is output on the corresponding output pin
+         Aux.CC1P  := False;  --  0: OC1 active high
+         Aux.CC1NP := False;
+         --  CC1 channel configured as output: CC1NP must be kept cleared in
+         --  this case.
+         Aux.CC2E  := True;
+         --  1: On - OC2 signal is output on the corresponding output pin
+         Aux.CC2P  := False;  --  0: OC2 active high
+         Aux.CC2NP := False;
+         --  CC2 channel configured as output: CC2NP must be kept cleared in
+         --  this case.
+         Aux.CC3E  := True;
+         --  1: On - OC3 signal is output on the corresponding output pin
+         Aux.CC3P  := False;  --  0: OC3 active high
+         Aux.CC3NP := False;
+         --  CC3 channel configured as output: CC3NP must be kept cleared in
+         --  this case.
+         Aux.CC4E  := True;
+         --  1: On - OC4 signal is output on the corresponding output pin
+         Aux.CC4P  := False;  --  0: OC4 active high
+         Aux.CC4NP := False;
+         --  CC4 channel configured as output: CC4NP must be kept cleared in
+         --  this case.
+
+         TIM.CCER := Aux;
+      end;
+
+      --  Set CNT to zero (TIM3/TIM4 support low part only)
+
+      TIM.CNT.CNT_L := 0;
+
+      --  Set PSC
+
+      TIM.PSC.PSC := Prescale;
+
+      --  Set ARR (TIM3/TIM4 support low part only)
+
+      TIM.ARR.ARR_L := Cycle - 1;
+
+      --  Set CCR1/CCR2/CCR3/CCR4 later
+
+      --  Configure DCR - Not used
+
+      --  Configure DMAR - Not used
+
+      --  Configure GPIO
+
+      M3_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH1,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M3_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH2,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M4_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH3,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M4_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH4,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+   end Initialize_TIM4;
 
    ---------------------
    -- Initialize_UART --
