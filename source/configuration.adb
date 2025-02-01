@@ -528,6 +528,10 @@ is
 
       --  Configure DMAR - Not used
 
+      --  Force update event to load configured values of ARR/PSC to shadow
+      --  registers.
+
+      TIM.EGR.UG := True;
    end Initialize_TIM3;
 
    ---------------------
@@ -745,6 +749,10 @@ is
 
       --  Configure DMAR - Not used
 
+      --  Force update event to load configured values of ARR/PSC to shadow
+      --  registers.
+
+      TIM.EGR.UG := True;
    end Initialize_TIM4;
 
    ---------------------
