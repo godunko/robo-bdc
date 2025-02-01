@@ -19,6 +19,8 @@ is
    Cycle    : constant := 3_360;
    --  1/1/3_360: PWM 25kHz CPU @84MHz (nominal for L298)
 
+   procedure Initialize_GPIO;
+
    procedure Initialize_TIM3;
    --  Configure TIM3. Timer is disabled. It generates TRGO on CEN set.
 
@@ -48,12 +50,68 @@ is
 
    procedure Initialize is
    begin
+      Initialize_GPIO;
       Initialize_UART;
       Initialize_TIM3;
       Initialize_TIM4;
 
       Enable_Timers;
    end Initialize;
+
+   ---------------------
+   -- Initialize_GPIO --
+   ---------------------
+
+   procedure Initialize_GPIO is
+   begin
+      --  TIM3 output
+
+      M1_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH1,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M1_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH2,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M2_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH3,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M2_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH4,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+
+      --  TIM4 output
+
+      M3_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH1,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M3_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH2,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M4_IN1_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH3,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+      M4_IN2_Pin.Configure_Alternative_Function
+        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH4,
+         Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.Pull_Up);
+
+      --  USART's input/output pins are configured by the USART driver
+   end Initialize_GPIO;
 
    ---------------------
    -- Initialize_TIM3 --
@@ -279,28 +337,6 @@ is
 
       --  Configure DMAR - Not used
 
-      --  Configure GPIO
-
-      M1_IN1_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH1,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M1_IN2_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH2,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M2_IN1_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH3,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M2_IN2_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM3_CH4,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
    end Initialize_TIM3;
 
    ---------------------
@@ -518,28 +554,6 @@ is
 
       --  Configure DMAR - Not used
 
-      --  Configure GPIO
-
-      M3_IN1_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH1,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M3_IN2_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH2,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M4_IN1_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH3,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
-      M4_IN2_Pin.Configure_Alternative_Function
-        (Line  => A0B.STM32F401.TIM_Lines.TIM4_CH4,
-         Mode  => A0B.STM32F401.GPIO.Push_Pull,
-         Speed => A0B.STM32F401.GPIO.Very_High,
-         Pull  => A0B.STM32F401.GPIO.Pull_Up);
    end Initialize_TIM4;
 
    ---------------------
