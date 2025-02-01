@@ -64,6 +64,17 @@ is
 
    procedure Initialize_GPIO is
    begin
+      --  ADC1 input
+
+      M1_C_Pin.Configure_Analog;
+      M1_P_Pin.Configure_Analog;
+      M2_C_Pin.Configure_Analog;
+      M2_P_Pin.Configure_Analog;
+      M3_C_Pin.Configure_Analog;
+      M3_P_Pin.Configure_Analog;
+      M4_C_Pin.Configure_Analog;
+      M4_P_Pin.Configure_Analog;
+
       --  TIM3 output
 
       M1_IN1_Pin.Configure_Alternative_Function

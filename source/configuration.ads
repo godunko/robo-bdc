@@ -21,8 +21,9 @@ is
 
    procedure Initialize;
    --  Initialize peripherals:
+   --    - GPIO
    --    - UART1 for console
-   --    - TIM3 timer for PWM
+   --    - TIM3/TIM4 timer for PWM
 
 private
 
@@ -42,5 +43,22 @@ private
      renames A0B.STM32F401.GPIO.PIOB.PB8;  --  TIM4_CH3
    M4_IN2_Pin : A0B.STM32F401.GPIO.GPIO_Line
      renames A0B.STM32F401.GPIO.PIOB.PB9;  --  TIM4_CH4
+
+   M1_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA0;  --  ADC1_IN0
+   M1_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA1;  --  ADC1_IN1
+   M2_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA2;  --  ADC1_IN2
+   M2_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA3;  --  ADC1_IN3
+   M3_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA4;  --  ADC1_IN4
+   M3_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA5;  --  ADC1_IN5
+   M4_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA6;  --  ADC1_IN6
+   M4_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
+     renames A0B.STM32F401.GPIO.PIOA.PA7;  --  ADC1_IN7
 
 end Configuration;
