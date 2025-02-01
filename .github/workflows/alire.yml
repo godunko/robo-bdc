@@ -19,6 +19,10 @@ jobs:
         path: a0b-spi
     - uses: actions/checkout@v4
       with:
+        repository: godunko/a0b-stm32f401-dma
+        path: a0b-stm32f401-dma
+    - uses: actions/checkout@v4
+      with:
         repository: godunko/a0b-stm32f401-gpio
         path: a0b-stm32f401-gpio
     - uses: actions/checkout@v4
