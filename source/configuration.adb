@@ -119,18 +119,11 @@ is
          --  0: Disable ADC conversion and go to power down mode
          Aux.CONT     := False;    --  0: Single conversion mode
          Aux.DMA      := True;     --  1: DMA mode enabled
-         Aux.DDS      := False;
-         --  0: No new DMA request is issued after the last transfer (as
-         --  configured in the DMA controller)
-         --  XXX Aux.DDS      := True;
-         --  XXX 1: DMA requests are issued as long as data are converted and
-         --  DMA=1
+         Aux.DDS      := True;
+         --  1: DMA requests are issued as long as data are converted and DMA=1
          Aux.EOCS     := False;
          --  0: The EOC bit is set at the end of each sequence of regular
          --  conversions. Overrun detection is enabled only if DMA=1.
-         --  XXX Aux.EOCS     := True;
-         --  1: The EOC bit is set at the end of each regular conversion.
-         --  Overrun detection is enabled.
          Aux.ALIGN    := False;    --  0: Right alignment
          --  Aux.JEXTSEL := <>;  --  Not used
          Aux.JEXTEN   := 2#00#;    --  00: Trigger detection disabled
@@ -240,7 +233,8 @@ is
         (Channel              => 0,
          Peripheral           => A0B.STM32F401.SVD.ADC.ADC1_Periph.DR'Address,
          Peripheral_Data_Size => A0B.STM32F401.DMA.Half_Word,
-         Memory_Data_Size     => A0B.STM32F401.DMA.Half_Word);
+         Memory_Data_Size     => A0B.STM32F401.DMA.Half_Word,
+         Circular_Mode        => True);
    end Initialize_DMA;
 
    ---------------------
