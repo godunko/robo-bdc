@@ -15,10 +15,12 @@ package body Configuration
   with Preelaborate
 is
 
-   Divider  : constant := 2#00#;  --  00: tDTS = tCK_INT
-   Prescale : constant := 1;
-   Cycle    : constant := 3_360;
+   Divider   : constant := 2#00#;  --  00: tDTS = tCK_INT
+   Prescale  : constant := 1;
+   PWM_Cycle : constant := 3_360;
    --  1/1/3_360: PWM 25kHz CPU @84MHz (nominal for L298)
+   ADC_Cycle : constant := 560;
+   --  1/1/560: 6x ADC samples per PWM cycle
 
    procedure Initialize_GPIO;
 
@@ -27,16 +29,18 @@ is
    procedure Initialize_ADC1;
 
    procedure Initialize_TIM3;
-   --  Configure TIM3. Timer is disabled. It generates TRGO on CEN set.
+   --  Configure TIM3 to generate PWM. Timer is disabled. It generates TRGO on
+   --  CEN set.
 
    procedure Initialize_TIM4;
-   --  Configure TIM4. Timer is disabled. It is configured to be triggered by
-   --  set of CEN of TIM3.
+   --  Configure TIM4 to generate PWM. Timer is disabled. It is configured to
+   --  be triggered by set of CEN of TIM3.
+
+   procedure Initialize_TIM5;
+   --  Configure TIM5 to initiate ADC sampling. Timer is disabled. It is
+   --  configured to be triggered by set of CEN of TIM3.
 
    procedure Initialize_UART;
-
-   procedure Enable_Timers;
-   --  Enable all timers.
 
    -------------------
    -- Enable_Timers --
@@ -61,8 +65,7 @@ is
       Initialize_ADC1;
       Initialize_TIM3;
       Initialize_TIM4;
-
-      Enable_Timers;
+      Initialize_TIM5;
    end Initialize;
 
    ---------------------
@@ -114,16 +117,18 @@ is
       begin
          Aux.ADON     := False;
          --  0: Disable ADC conversion and go to power down mode
-         Aux.CONT     := True;    --  1: Continuous conversion mode
-         --  XXX Aux.CONT     := False;    --  0: Single conversion mode
-         Aux.DMA      := True;    --  1: DMA mode enabled
+         Aux.CONT     := False;    --  0: Single conversion mode
+         Aux.DMA      := True;     --  1: DMA mode enabled
          Aux.DDS      := False;
          --  0: No new DMA request is issued after the last transfer (as
          --  configured in the DMA controller)
          --  XXX Aux.DDS      := True;
          --  XXX 1: DMA requests are issued as long as data are converted and
          --  DMA=1
-         Aux.EOCS     := True;
+         Aux.EOCS     := False;
+         --  0: The EOC bit is set at the end of each sequence of regular
+         --  conversions. Overrun detection is enabled only if DMA=1.
+         --  XXX Aux.EOCS     := True;
          --  1: The EOC bit is set at the end of each regular conversion.
          --  Overrun detection is enabled.
          Aux.ALIGN    := False;    --  0: Right alignment
@@ -520,7 +525,7 @@ is
 
       --  Set ARR (TIM3/TIM4 support low part only)
 
-      TIM.ARR.ARR_L := Cycle - 1;
+      TIM.ARR.ARR_L := PWM_Cycle - 1;
 
       --  Set CCR1/CCR2/CCR3/CCR4 later
 
@@ -741,7 +746,7 @@ is
 
       --  Set ARR (TIM3/TIM4 support low part only)
 
-      TIM.ARR.ARR_L := Cycle - 1;
+      TIM.ARR.ARR_L := PWM_Cycle - 1;
 
       --  Set CCR1/CCR2/CCR3/CCR4 later
 
@@ -754,6 +759,158 @@ is
 
       TIM.EGR.UG := True;
    end Initialize_TIM4;
+
+   ---------------------
+   -- Initialize_TIM5 --
+   ---------------------
+
+   procedure Initialize_TIM5 is
+      use A0B.STM32F401.SVD.TIM;
+      use type A0B.Types.Unsigned_16;
+
+      TIM : TIM5_Peripheral renames TIM5_Periph;
+
+   begin
+      A0B.STM32F401.SVD.RCC.RCC_Periph.APB1ENR.TIM5EN := True;
+
+      --  Configure CR1
+
+      declare
+         Aux : A0B.STM32F401.SVD.TIM.CR1_Register := TIM.CR1;
+
+      begin
+         Aux.CEN  := False;  --  0: Counter disabled
+         Aux.UDIS := False;  --  0: UEV enabled
+         Aux.URS  := False;
+         --  0: Any of the following events generate an update interrupt or DMA
+         --  request if enabled.
+         --
+         --  These events can be:
+         --  – Counter overflow/underflow
+         --  – Setting the UG bit
+         --  – Update generation through the slave mode controller
+         Aux.OPM  := False;  --  0: Counter is not stopped at update event
+         Aux.DIR  := False;  --  0: Counter used as upcounter
+         Aux.CMS  := 2#00#;
+         --  00: Edge-aligned mode. The counter counts up or down depending on
+         --  the direction bit (DIR).
+         Aux.ARPE := True;   --  1: TIMx_ARR register is buffered
+         Aux.CKD  := Divider;
+
+         TIM.CR1 := Aux;
+      end;
+
+      --  Configure CR2
+
+      declare
+         Aux : CR2_Register_1 := TIM.CR2;
+
+      begin
+         --  Aux.CCDS := <>;  --  Not needed
+         --  Aux.MMS  := <>;  --  Not needed
+         Aux.TI1S := False;  --  0: The TIMx_CH1 pin is connected to TI1 input
+
+         TIM.CR2 := Aux;
+      end;
+
+      --  Configure SMCR
+
+      declare
+         Aux : SMCR_Register := TIM.SMCR;
+
+      begin
+         Aux.SMS  := 2#110#;
+         --  110: Trigger Mode - The counter starts at a rising edge of the
+         --  trigger TRGI (but it is not reset). Only the start of the counter
+         --  is controlled.
+         Aux.TS   := 2#001#;  --  001: Internal Trigger 1 (ITR1).
+         Aux.MSM  := True;
+         --  1: The effect of an event on the trigger input (TRGI) is delayed
+         --  to allow a perfect synchronization between the current timer and
+         --  its slaves (through TRGO). It is useful if we want to synchronize
+         --  several timers on a single external event.
+         --  Aux.ETF  := <>;  --  Not used
+         --  Aux.ETPS := <>;  --  Not used
+         --  Aux.ECE  := <>;  --  Not used
+         --  Aux.ETP  := <>;  --  Not used
+
+         TIM.SMCR := Aux;
+      end;
+
+      --  Configure DIER - Not used
+
+      --  XXX Reset SR by write 0?
+
+      --  Set EGR - Not used
+
+      --  Configure CCMR1 only for CH1
+
+      declare
+         Aux : CCMR1_Output_Register := TIM.CCMR1_Output;
+
+      begin
+         Aux.CC1S  := 2#00#;  --  00: CC1 channel is configured as output.
+         Aux.OC1FE := False;
+         --  0: CC1 behaves normally depending on counter and CCR1 values even
+         --  when the trigger is ON. The minimum delay to activate CC1 output
+         --  when an edge occurs on the trigger input is 5 clock cycles.
+         Aux.OC1PE := True;
+         --  1: Preload register on TIMx_CCR1 enabled. Read/Write operations
+         --  access the preload register. TIMx_CCR1 preload value is loaded
+         --  in the active register at each update event.
+         Aux.OC1M  := 2#110#;
+         --  110: PWM mode 1 - In upcounting, channel 1 is active as long as
+         --  TIMx_CNT<TIMx_CCR1 else inactive. In downcounting, channel 1 is
+         --  inactive (OC1REF=‘0) as long as TIMx_CNT>TIMx_CCR1 else active
+         --  (OC1REF=1).
+         Aux.OC1CE := False;  --  0: OC1Ref is not affected by the ETRF input
+
+         TIM.CCMR1_Output := Aux;
+      end;
+
+      --  Configure CCMR2 - Not used
+
+      --  Configure CCER, only CH1
+
+      declare
+         Aux : CCER_Register_1 := TIM.CCER;
+
+      begin
+         Aux.CC1E  := True;
+         --  1: On - OC1 signal is output on the corresponding output pin
+         Aux.CC1P  := False;  --  0: OC1 active high
+         Aux.CC1NP := False;
+         --  CC1 channel configured as output: CC1NP must be kept cleared in
+         --  this case.
+
+         TIM.CCER := Aux;
+      end;
+
+      --  Set CNT to zero
+
+      TIM.CNT := (CNT_L => 0, CNT_H => 0);
+
+      --  Set PSC
+
+      TIM.PSC.PSC := Prescale;
+
+      --  Set ARR
+
+      TIM.ARR := (ARR_L => ADC_Cycle - 1, ARR_H => 0);
+
+      --  Set CCR1/CCR2/CCR3/CCR4 later
+
+      TIM.CCR1 := (CCR1_L => ADC_Cycle / 2, CCR1_H => 0);
+
+      --  Configure DCR - Not used
+
+      --  Configure DMAR - Not used
+
+      --  Force update event to load configured values of ARR/PSC to shadow
+      --  registers.
+
+      TIM.EGR.UG := True;
+   end Initialize_TIM5;
 
    ---------------------
    -- Initialize_UART --

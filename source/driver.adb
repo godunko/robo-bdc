@@ -15,6 +15,8 @@ procedure Driver is
 
 begin
    Configuration.Initialize;
+   Sensors.Initialize;
+   Configuration.Enable_Timers;
 
    Console.New_Line;
    Console.Put_Line ("RoboBDC Brushed DC Motors Controller");

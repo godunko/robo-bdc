@@ -30,6 +30,11 @@ is
    --    - ADC1
    --    - TIM3/TIM4 timer for PWM
    --    - UART1 for console
+   --
+   --  All timers are disabled to be able to complete setup of ADC data.
+
+   procedure Enable_Timers;
+   --  Enable all timers.
 
 private
 

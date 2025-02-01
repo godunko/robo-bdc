@@ -4,7 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with A0B.STM32F401.SVD.ADC;
+--  with A0B.STM32F401.SVD.ADC;
 with A0B.Types;
 
 with Configuration;
@@ -31,7 +31,7 @@ package body Sensors is
    ------------------
 
    procedure Collect_Data is
-      use A0B.STM32F401.SVD.ADC;
+      --  use A0B.STM32F401.SVD.ADC;
 
       --  function Get return A0B.Types.Unsigned_16;
       --
@@ -49,14 +49,10 @@ package body Sensors is
       --  end Get;
 
    begin
-      Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
-        (Memory    => Data'Address,
-         Count     => 9_000,
-         Increment => True);
-      Configuration.ADC1_DMA_Stream.Enable;
+      null;
 
       --  for Item of Data loop
-      ADC1_Periph.CR2.SWSTART := True;
+      --  ADC1_Periph.CR2.SWSTART := True;
          --  Item.Vref        := Get;
          --  Item.M1_Current  := Get;
          --  Item.M1_Position := Get;
@@ -114,5 +110,18 @@ package body Sensors is
 
       Console.New_Line;
    end Dump;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is
+   begin
+      Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
+        (Memory    => Data'Address,
+         Count     => 9_000,
+         Increment => True);
+      Configuration.ADC1_DMA_Stream.Enable;
+   end Initialize;
 
 end Sensors;

@@ -10,4 +10,6 @@ package Sensors is
 
    procedure Dump;
 
+   procedure Initialize;
+
 end Sensors;
