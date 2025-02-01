@@ -4,6 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with A0B.STM32F401.SVD.ADC;
 with A0B.STM32F401.SVD.RCC;
 with A0B.STM32F401.SVD.TIM;
 with A0B.STM32F401.TIM_Lines;
@@ -20,6 +21,8 @@ is
    --  1/1/3_360: PWM 25kHz CPU @84MHz (nominal for L298)
 
    procedure Initialize_GPIO;
+
+   procedure Initialize_ADC1;
 
    procedure Initialize_TIM3;
    --  Configure TIM3. Timer is disabled. It generates TRGO on CEN set.
@@ -52,11 +55,167 @@ is
    begin
       Initialize_GPIO;
       Initialize_UART;
+      Initialize_ADC1;
       Initialize_TIM3;
       Initialize_TIM4;
 
       Enable_Timers;
    end Initialize;
+
+   ---------------------
+   -- Initialize_ADC1 --
+   ---------------------
+
+   procedure Initialize_ADC1 is
+      use A0B.STM32F401.SVD.ADC;
+
+   begin
+      A0B.STM32F401.SVD.RCC.RCC_Periph.APB2ENR.ADC1EN := True;
+
+      --  Clear SR - Not needed
+
+      --  Configure CR1
+
+      declare
+         Aux : A0B.STM32F401.SVD.ADC.CR1_Register := ADC1_Periph.CR1;
+
+      begin
+         --  Aux.AWDCH := <>;  --  Not used
+         Aux.EOCIE   := False;  --  0: EOC interrupt disabled
+         Aux.AWDIE   := False;  --  0: Analog watchdog interrupt disabled
+         Aux.JEOCIE  := False;  --  0: JEOC interrupt disabled
+         Aux.SCAN    := True;   --  1: Scan mode enabled
+         --  Aux.AWDSGL := <>;  --  Not used
+         Aux.JAUTO   := False;
+         --  0: Automatic injected group conversion disabled
+         Aux.DISCEN  := False;
+         --  0: Discontinuous mode on regular channels disabled
+         Aux.JDISCEN := False;
+         --  0: Discontinuous mode on injected channels disabled
+         --  Aux.DISCNUM := <>;  --  Not used
+         Aux.JAWDEN  := False;
+         --  0: Analog watchdog disabled on injected channels
+         Aux.AWDIE   := False;
+         --  0: Analog watchdog disabled on regular channels
+         Aux.RES     := 2#00#;  --  00: 12-bit (15 ADCCLK cycles)
+         Aux.OVRIE   := False;  --  0: Overrun interrupt disabled
+
+         ADC1_Periph.CR1 := Aux;
+      end;
+
+      --  Configure CR2
+
+      declare
+         Aux : A0B.STM32F401.SVD.ADC.CR2_Register := ADC1_Periph.CR2;
+
+      begin
+         Aux.ADON     := False;
+         --  0: Disable ADC conversion and go to power down mode
+         Aux.CONT     := False;    --  0: Single conversion mode
+         Aux.DMA      := False;    --  0: DMA mode disabled
+         Aux.DDS      := True;
+         --  1: DMA requests are issued as long as data are converted and DMA=1
+         Aux.EOCS     := True;
+         --  1: The EOC bit is set at the end of each regular conversion.
+         --  Overrun detection is enabled.
+         Aux.ALIGN    := False;    --  0: Right alignment
+         --  Aux.JEXTSEL := <>;  --  Not used
+         Aux.JEXTEN   := 2#00#;    --  00: Trigger detection disabled
+         Aux.JSWSTART := False;    --  0: Reset state
+         Aux.EXTSEL   := 2#1010#;  --  1010: Timer 5 CC1 event
+         Aux.EXTEN    := 2#01#;    --  01: Trigger detection on the rising edge
+         Aux.SWSTART  := False;    --  0: Reset state
+
+         ADC1_Periph.CR2 := Aux;
+      end;
+
+      --  Configure SMPR1
+
+      ADC1_Periph.SMPR1 := 0; --  000: 3 cycles, for channels 10..18
+
+      --  Configure SMPR2
+
+      ADC1_Periph.SMPR2 := 0; --  000: 3 cycles, for channels 0..9
+
+      --  Configure JOFR1 - Not used
+
+      --  Configure JOFR2 - Not used
+
+      --  Configure JOFR3 - Not used
+
+      --  Configure JOFR4 - Not used
+
+      --  Configure HTR - Not used
+
+      --  Configure LTR - Not used
+
+      --  Configure SQR1
+
+      declare
+         Aux : A0B.STM32F401.SVD.ADC.SQR1_Register := ADC1_Periph.SQR1;
+
+      begin
+         --  Aux.SQ.Arr (16) := <>;  --  Not used
+         --  Aux.SQ.Arr (15) := <>;  --  Not used
+         --  Aux.SQ.Arr (14) := <>;  --  Not used
+         --  Aux.SQ.Arr (13) := <>;  --  Not used
+         Aux.L := 2#1000#;  --  1000: 9 conversions
+
+         ADC1_Periph.SQR1 := Aux;
+      end;
+
+      --  Configure SQR2
+
+      declare
+         Aux : A0B.STM32F401.SVD.ADC.SQR2_Register := ADC1_Periph.SQR2;
+
+      begin
+         --  Aux.SQ.Arr (12) := <>;  --  Not used
+         --  Aux.SQ.Arr (11) := <>;  --  Not used
+         --  Aux.SQ.Arr (10) := <>;  --  Not used
+         Aux.SQ.Arr (9) := 7;   --  IN7
+         Aux.SQ.Arr (8) := 6;   --  IN6
+         Aux.SQ.Arr (7) := 5;   --  IN5
+
+         ADC1_Periph.SQR2 := Aux;
+      end;
+
+      --  Configure SQR3
+
+      declare
+         Aux : A0B.STM32F401.SVD.ADC.SQR3_Register := ADC1_Periph.SQR3;
+
+      begin
+         Aux.SQ.Arr (6) := 4;   --  IN4
+         Aux.SQ.Arr (5) := 3;   --  IN3
+         Aux.SQ.Arr (4) := 2;   --  IN2
+         Aux.SQ.Arr (3) := 1;   --  IN1
+         Aux.SQ.Arr (2) := 0;   --  IN0
+         Aux.SQ.Arr (1) := 17;  --  IN17 VREFINT
+
+         ADC1_Periph.SQR3 := Aux;
+      end;
+
+      --  Configure JSQR - Not used
+
+      --  Configure CCR
+
+      declare
+         Aux : CCR_Register := ADC_Common_Periph.CCR;
+
+      begin
+         Aux.ADCPRE  := 2#01#;  --  PCLK2 divided by 4
+         Aux.VBATE   := False;  --  0: VBAT channel disabled
+         Aux.TSVREFE := True;
+         --  1: Temperature sensor and VREFINT channel enabled
+
+         ADC_Common_Periph.CCR := Aux;
+      end;
+
+      --  Enable ADC
+
+      ADC1_Periph.CR2.ADON := True;
+   end Initialize_ADC1;
 
    ---------------------
    -- Initialize_GPIO --

@@ -7,6 +7,7 @@
 with Configuration;
 with Console;
 with Motor_Drivers;
+with Sensors;
 
 procedure Driver is
    Motor   : Motor_Drivers.Motor_Index := 1;
@@ -55,6 +56,11 @@ begin
          when 'o' | 'O' =>
             Console.Put_Line ("off");
             Motor_Drivers.Set_Off (Motor);
+
+         when 'a' | 'A' =>
+            Console.Put_Line ("collect sensors data");
+            Sensors.Collect_Data;
+            Sensors.Dump;
 
          when others =>
             Console.Put_Line ("unknown command");
