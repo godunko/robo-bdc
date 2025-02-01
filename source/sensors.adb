@@ -7,6 +7,7 @@
 with A0B.STM32F401.SVD.ADC;
 with A0B.Types;
 
+with Configuration;
 with Console;
 
 package body Sensors is
@@ -32,34 +33,40 @@ package body Sensors is
    procedure Collect_Data is
       use A0B.STM32F401.SVD.ADC;
 
-      function Get return A0B.Types.Unsigned_16;
-
-      ---------
-      -- Get --
-      ---------
-
-      function Get return A0B.Types.Unsigned_16 is
-      begin
-         while not ADC1_Periph.SR.EOC loop
-            null;
-         end loop;
-
-         return ADC1_Periph.DR.DATA;
-      end Get;
+      --  function Get return A0B.Types.Unsigned_16;
+      --
+      --  ---------
+      --  -- Get --
+      --  ---------
+      --
+      --  function Get return A0B.Types.Unsigned_16 is
+      --  begin
+      --     while not ADC1_Periph.SR.EOC loop
+      --        null;
+      --     end loop;
+      --
+      --     return ADC1_Periph.DR.DATA;
+      --  end Get;
 
    begin
-      for Item of Data loop
-         ADC1_Periph.CR2.SWSTART := True;
-         Item.Vref        := Get;
-         Item.M1_Current  := Get;
-         Item.M1_Position := Get;
-         Item.M2_Current  := Get;
-         Item.M2_Position := Get;
-         Item.M3_Current  := Get;
-         Item.M3_Position := Get;
-         Item.M4_Current  := Get;
-         Item.M4_Position := Get;
-      end loop;
+      Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
+        (Memory    => Data'Address,
+         Count     => 9_000,
+         Increment => True);
+      Configuration.ADC1_DMA_Stream.Enable;
+
+      --  for Item of Data loop
+      ADC1_Periph.CR2.SWSTART := True;
+         --  Item.Vref        := Get;
+         --  Item.M1_Current  := Get;
+         --  Item.M1_Position := Get;
+         --  Item.M2_Current  := Get;
+         --  Item.M2_Position := Get;
+         --  Item.M3_Current  := Get;
+         --  Item.M3_Position := Get;
+         --  Item.M4_Current  := Get;
+         --  Item.M4_Position := Get;
+      --  end loop;
    end Collect_Data;
 
    ----------

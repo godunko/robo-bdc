@@ -4,6 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with A0B.STM32F401.DMA.DMA2.Stream0;
 with A0B.STM32F401.DMA.DMA2.Stream5;
 with A0B.STM32F401.GPIO.PIOA;
 private with A0B.STM32F401.GPIO.PIOB;
@@ -19,11 +20,16 @@ is
       TX_Pin         => A0B.STM32F401.GPIO.PIOA.PA9'Access,
       RX_Pin         => A0B.STM32F401.GPIO.PIOA.PA10'Access);
 
+   ADC1_DMA_Stream : A0B.STM32F401.DMA.DMA_Stream
+     renames A0B.STM32F401.DMA.DMA2.Stream0.DMA2_Stream0;
+
    procedure Initialize;
    --  Initialize peripherals:
    --    - GPIO
-   --    - UART1 for console
+   --    - DMA2 Stream0 for ADC
+   --    - ADC1
    --    - TIM3/TIM4 timer for PWM
+   --    - UART1 for console
 
 private
 

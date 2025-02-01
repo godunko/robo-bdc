@@ -22,6 +22,8 @@ is
 
    procedure Initialize_GPIO;
 
+   procedure Initialize_DMA;
+
    procedure Initialize_ADC1;
 
    procedure Initialize_TIM3;
@@ -54,6 +56,7 @@ is
    procedure Initialize is
    begin
       Initialize_GPIO;
+      Initialize_DMA;
       Initialize_UART;
       Initialize_ADC1;
       Initialize_TIM3;
@@ -111,10 +114,15 @@ is
       begin
          Aux.ADON     := False;
          --  0: Disable ADC conversion and go to power down mode
-         Aux.CONT     := False;    --  0: Single conversion mode
-         Aux.DMA      := False;    --  0: DMA mode disabled
-         Aux.DDS      := True;
-         --  1: DMA requests are issued as long as data are converted and DMA=1
+         Aux.CONT     := True;    --  1: Continuous conversion mode
+         --  XXX Aux.CONT     := False;    --  0: Single conversion mode
+         Aux.DMA      := True;    --  1: DMA mode enabled
+         Aux.DDS      := False;
+         --  0: No new DMA request is issued after the last transfer (as
+         --  configured in the DMA controller)
+         --  XXX Aux.DDS      := True;
+         --  XXX 1: DMA requests are issued as long as data are converted and
+         --  DMA=1
          Aux.EOCS     := True;
          --  1: The EOC bit is set at the end of each regular conversion.
          --  Overrun detection is enabled.
@@ -216,6 +224,19 @@ is
 
       ADC1_Periph.CR2.ADON := True;
    end Initialize_ADC1;
+
+   --------------------
+   -- Initialize_DMA --
+   --------------------
+
+   procedure Initialize_DMA is
+   begin
+      ADC1_DMA_Stream.Configure_Peripheral_To_Memory
+        (Channel              => 0,
+         Peripheral           => A0B.STM32F401.SVD.ADC.ADC1_Periph.DR'Address,
+         Peripheral_Data_Size => A0B.STM32F401.DMA.Half_Word,
+         Memory_Data_Size     => A0B.STM32F401.DMA.Half_Word);
+   end Initialize_DMA;
 
    ---------------------
    -- Initialize_GPIO --
