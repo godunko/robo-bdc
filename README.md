@@ -10,3 +10,8 @@ These basic servos are adequate for beginners, but their limitations in performa
 It repurposes essential components of widely used PWM-controlled servo motors, such as DC motors, gear assemblies, and resistive position sensors.
 The system is powered by an affordable yet capable Blackpill STM32F401 microcontroller, combined with A4950 motor drivers.
 This setup provides hobbyists with a cost-effective solution to build more advanced robotic systems without needing expensive or specialized hardware.
+
+## Hardware
+
+ * WeAct Blackpill STM32F401 (or [STM32F411 25MHz HSE](https://aliexpress.ru/item/1005001456186625.html)) Development Board
+ * 2x[A4950](https://aliexpress.ru/item/1005004255910206.html) Dual Motor Drive Module
