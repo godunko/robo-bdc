@@ -4,7 +4,9 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  with A0B.STM32F401.SVD.ADC;
+pragma Ada_2022;
+
+with A0B.Callbacks.Generic_Parameterless;
 with A0B.Types;
 
 with Configuration;
@@ -24,45 +26,27 @@ package body Sensors is
       M4_Position : A0B.Types.Unsigned_16;
    end record;
 
-   Data : array (1 .. 1_000) of Sensors_Data with Export;
+   type Buffer_Array is array (Positive range <>) of Sensors_Data;
+
+   Buffer : Buffer_Array (1 .. 120) with Export;
+   --  Buffer to receive data with DNA.
+
+   Data   : Buffer_Array (1 .. 1_000) with Export;
+   Last   : Natural := 0;
+   --  Buffer to accumulate data.
+
+   procedure On_Conversion_Done;
+
+   package On_Conversion_Done_Callbacks is
+      new A0B.Callbacks.Generic_Parameterless (On_Conversion_Done);
 
    ------------------
    -- Collect_Data --
    ------------------
 
    procedure Collect_Data is
-      --  use A0B.STM32F401.SVD.ADC;
-
-      --  function Get return A0B.Types.Unsigned_16;
-      --
-      --  ---------
-      --  -- Get --
-      --  ---------
-      --
-      --  function Get return A0B.Types.Unsigned_16 is
-      --  begin
-      --     while not ADC1_Periph.SR.EOC loop
-      --        null;
-      --     end loop;
-      --
-      --     return ADC1_Periph.DR.DATA;
-      --  end Get;
-
    begin
-      null;
-
-      --  for Item of Data loop
-      --  ADC1_Periph.CR2.SWSTART := True;
-         --  Item.Vref        := Get;
-         --  Item.M1_Current  := Get;
-         --  Item.M1_Position := Get;
-         --  Item.M2_Current  := Get;
-         --  Item.M2_Position := Get;
-         --  Item.M3_Current  := Get;
-         --  Item.M3_Position := Get;
-         --  Item.M4_Current  := Get;
-         --  Item.M4_Position := Get;
-      --  end loop;
+      Last := 0;
    end Collect_Data;
 
    ----------
@@ -70,6 +54,16 @@ package body Sensors is
    ----------
 
    procedure Dump is
+
+      procedure Put (Item : A0B.Types.Unsigned_16) is
+         Image  : constant String := A0B.Types.Unsigned_16'Image (Item);
+         Buffer : String (1 .. 5) := (others => ' ');
+
+      begin
+         Buffer (Buffer'Last - Image'Length + 1 .. Buffer'Last) := Image;
+         Console.Put (Buffer);
+      end Put;
+
    begin
       Console.New_Line;
       Console.Put_Line ("Vref");
@@ -88,11 +82,13 @@ package body Sensors is
       Console.Put_Line ("M1 current");
 
       for J in Data'Range loop
-         if (J - 1) mod 20 = 0 then
+         if (J - 1) mod 30 = 0 then
             Console.New_Line;
+         elsif (J - 1) mod 6 = 0 then
+            Console.Put ("  ");
          end if;
 
-         Console.Put (A0B.Types.Unsigned_16'Image (Data (J).M1_Current));
+         Put (Data (J).M1_Current);
       end loop;
 
       Console.New_Line;
@@ -116,12 +112,42 @@ package body Sensors is
    ----------------
 
    procedure Initialize is
+      use type A0B.Types.Unsigned_16;
+
    begin
       Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
-        (Memory    => Data'Address,
-         Count     => 9_000,
+        (Memory    => Buffer'Address,
+         Count     => Buffer'Length * 9,
          Increment => True);
       Configuration.ADC1_DMA_Stream.Enable;
+      Configuration.ADC1_DMA_Stream.Set_Interrupt_Callback
+        (On_Conversion_Done_Callbacks.Create_Callback);
+      Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
+      Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
    end Initialize;
+
+   ------------------------
+   -- On_Conversion_Done --
+   ------------------------
+
+   procedure On_Conversion_Done is
+   begin
+      if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
+         if Last < Data'Last - Buffer'Length then
+            Data (Last + 1 .. Last + Buffer'Length / 2) :=
+              Buffer (Buffer'First .. Buffer'Length / 2);
+            Last := @ + Buffer'Length / 2;
+         end if;
+      end if;
+
+      if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
+      then
+         if Last < Data'Last - Buffer'Length then
+            Data (Last + 1 .. Last + Buffer'Length / 2) :=
+              Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
+            Last := @ + Buffer'Length / 2;
+         end if;
+      end if;
+   end On_Conversion_Done;
 
 end Sensors;
