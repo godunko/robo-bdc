@@ -6,14 +6,12 @@
 
 with A0B.Types;
 
-package Sensors is
+package Control is
 
-   procedure Collect_Data;
-
-   procedure Dump;
+   procedure Iteration;
 
    procedure Initialize;
 
-   function Get_Position return A0B.Types.Unsigned_16;
+   procedure Set (To : A0B.Types.Unsigned_16);
 
-end Sensors;
+end Control;

@@ -7,10 +7,10 @@
 pragma Ada_2022;
 
 with A0B.Callbacks.Generic_Parameterless;
-with A0B.Types;
 
 with Configuration;
 with Console;
+with Control;
 
 package body Sensors is
 
@@ -34,6 +34,8 @@ package body Sensors is
    Data   : Buffer_Array (1 .. 1_000) with Export;
    Last   : Natural := 0;
    --  Buffer to accumulate data.
+
+   Current : Sensors_Data;
 
    procedure On_Conversion_Done;
 
@@ -107,6 +109,15 @@ package body Sensors is
       Console.New_Line;
    end Dump;
 
+   ------------------
+   -- Get_Position --
+   ------------------
+
+   function Get_Position return A0B.Types.Unsigned_16 is
+   begin
+      return Current.M1_Position;
+   end Get_Position;
+
    ----------------
    -- Initialize --
    ----------------
@@ -138,6 +149,8 @@ package body Sensors is
               Buffer (Buffer'First .. Buffer'Length / 2);
             Last := @ + Buffer'Length / 2;
          end if;
+
+         Current := Buffer (Buffer'Length / 2);
       end if;
 
       if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
@@ -147,7 +160,11 @@ package body Sensors is
               Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
             Last := @ + Buffer'Length / 2;
          end if;
+
+         Current := Buffer (Buffer'Last);
       end if;
+
+      Control.Iteration;
    end On_Conversion_Done;
 
 end Sensors;

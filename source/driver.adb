@@ -4,18 +4,25 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+pragma Ada_2022;
+
+with A0B.Types;
+
 with Configuration;
 with Console;
-with Motor_Drivers;
+with Control;
 with Sensors;
 
 procedure Driver is
-   Motor   : Motor_Drivers.Motor_Index := 1;
+   use type A0B.Types.Unsigned_16;
+
    Command : Character;
+   Desired : A0B.Types.Unsigned_16 := 2_048;
 
 begin
    Configuration.Initialize;
    Sensors.Initialize;
+   Control.Initialize;
    Configuration.Enable_Timers;
 
    Console.New_Line;
@@ -27,42 +34,20 @@ begin
       Console.Get (Command);
 
       case Command is
-         when '1' =>
-            Console.Put_Line ("Motor 1 selected");
-            Motor := 1;
-
-         when '2' =>
-            Console.Put_Line ("Motor 2 selected");
-            Motor := 2;
-
-         when '3' =>
-            Console.Put_Line ("Motor 3 selected");
-            Motor := 3;
-
-         when '4' =>
-            Console.Put_Line ("Motor 4 selected");
-            Motor := 4;
-
-         when 'f' | 'F' =>
-            Console.Put_Line ("forward");
-            Motor_Drivers.Set_Forward (Motor);
-
-         when 'r' | 'R' =>
-            Console.Put_Line ("reverse");
-            Motor_Drivers.Set_Backward (Motor);
-
-         when 'b' | 'B' =>
-            Console.Put_Line ("break");
-            Motor_Drivers.Set_Break (Motor);
-
-         when 'o' | 'O' =>
-            Console.Put_Line ("off");
-            Motor_Drivers.Set_Off (Motor);
-
          when 'a' | 'A' =>
             Console.Put_Line ("collect sensors data");
             Sensors.Collect_Data;
             Sensors.Dump;
+
+         when '-' | '_' =>
+            Desired := @ - 16;
+            Control.Set (Desired);
+            Console.Put_Line (A0B.Types.Unsigned_16'Image (Desired));
+
+         when '=' | '+' =>
+            Desired := @ + 16;
+            Control.Set (Desired);
+            Console.Put_Line (A0B.Types.Unsigned_16'Image (Desired));
 
          when others =>
             Console.Put_Line ("unknown command");
