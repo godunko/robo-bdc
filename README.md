@@ -15,3 +15,7 @@ This setup provides hobbyists with a cost-effective solution to build more advan
 
  * WeAct Blackpill STM32F401 (or [STM32F411 25MHz HSE](https://aliexpress.ru/item/1005001456186625.html)) Development Board
  * 2x[A4950](https://aliexpress.ru/item/1005004255910206.html) Dual Motor Drive Module
+
+## Current state of development
+
+Simplest position control algorithm has been implemented to prove hardware setup.
