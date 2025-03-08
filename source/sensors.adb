@@ -31,11 +31,12 @@ package body Sensors is
    Buffer : Buffer_Array (1 .. 120) with Export;
    --  Buffer to receive data with DNA.
 
-   Data   : Buffer_Array (1 .. 1_000) with Export;
+   Data   : Buffer_Array (1 .. 2_400) with Export;
    Last   : Natural := 0;
    --  Buffer to accumulate data.
 
    Current : Sensors_Data;
+   Average_Position : A0B.Types.Unsigned_16;
 
    procedure On_Conversion_Done;
 
@@ -67,18 +68,20 @@ package body Sensors is
       end Put;
 
    begin
-      Console.New_Line;
-      Console.Put_Line ("Vref");
-
-      for J in Data'Range loop
-         if (J - 1) mod 20 = 0 then
-            Console.New_Line;
-         end if;
-
-         Console.Put (A0B.Types.Unsigned_16'Image (Data (J).Vref));
-      end loop;
-
-      Console.New_Line;
+      --  Console.New_Line;
+      --  Console.Put_Line ("Vref");
+      --
+      --  for J in Data'Range loop
+      --     if (J - 1) mod 30 = 0 then
+      --        Console.New_Line;
+      --     elsif (J - 1) mod 6 = 0 then
+      --        Console.Put ("  ");
+      --     end if;
+      --
+      --     Put (Data (J).Vref);
+      --  end loop;
+      --
+      --  Console.New_Line;
 
       Console.New_Line;
       Console.Put_Line ("M1 current");
@@ -99,11 +102,13 @@ package body Sensors is
       Console.Put_Line ("M1 position");
 
       for J in Data'Range loop
-         if (J - 1) mod 20 = 0 then
+         if (J - 1) mod 30 = 0 then
             Console.New_Line;
+         elsif (J - 1) mod 6 = 0 then
+            Console.Put ("  ");
          end if;
 
-         Console.Put (A0B.Types.Unsigned_16'Image (Data (J).M1_Position));
+         Put (Data (J).M1_Position);
       end loop;
 
       Console.New_Line;
@@ -115,7 +120,8 @@ package body Sensors is
 
    function Get_Position return A0B.Types.Unsigned_16 is
    begin
-      return Current.M1_Position;
+      return Average_Position;
+      --  return Current.M1_Position;
    end Get_Position;
 
    ----------------
@@ -142,9 +148,15 @@ package body Sensors is
    ------------------------
 
    procedure On_Conversion_Done is
+      F : Positive;
+      L : Positive;
+
    begin
       if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
-         if Last < Data'Last - Buffer'Length then
+         if Last <= Data'Last - Buffer'Length / 2 then
+            F := Buffer'First;
+            L := Buffer'Length / 2;
+
             Data (Last + 1 .. Last + Buffer'Length / 2) :=
               Buffer (Buffer'First .. Buffer'Length / 2);
             Last := @ + Buffer'Length / 2;
@@ -155,7 +167,10 @@ package body Sensors is
 
       if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
       then
-         if Last < Data'Last - Buffer'Length then
+         F := Buffer'First;
+         L := Buffer'Length / 2;
+
+         if Last <= Data'Last - Buffer'Length / 2 then
             Data (Last + 1 .. Last + Buffer'Length / 2) :=
               Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
             Last := @ + Buffer'Length / 2;
@@ -163,6 +178,20 @@ package body Sensors is
 
          Current := Buffer (Buffer'Last);
       end if;
+
+      declare
+         use type A0B.Types.Unsigned_32;
+
+         A : A0B.Types.Unsigned_32 := 0;
+
+      begin
+         for J in F .. L loop
+            A := @ + A0B.Types.Unsigned_32 (Buffer (J).M1_Position);
+         end loop;
+
+         Average_Position :=
+           A0B.Types.Unsigned_16 (A / A0B.Types.Unsigned_32 (L - F + 1));
+      end;
 
       Control.Iteration;
    end On_Conversion_Done;

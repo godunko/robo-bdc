@@ -9,7 +9,8 @@ with A0B.Types;
 
 package body Motor_Drivers is
 
-   CCR : constant := 2_520;
+   --  CCR : constant := 2_520;
+   CCR : constant := 3_360;
 
    procedure Set_1
      (CCR1 : A0B.Types.Unsigned_16;

@@ -30,10 +30,10 @@ package body Control is
       Current : constant A0B.Types.Unsigned_16 := Sensors.Get_Position;
 
    begin
-      if Current < Desired - 10 then
+      if Current < Desired - 8 then
          Motor_Drivers.Set_Forward (1);
 
-      elsif Current > Desired + 10 then
+      elsif Current > Desired + 8 then
          Motor_Drivers.Set_Backward (1);
 
       else

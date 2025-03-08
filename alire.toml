@@ -16,8 +16,11 @@ generate_c = false
 generate_gpr = true
 
 [[depends-on]]
-light_blackpill_stm32f401 = "*"
+a0b_armv7m_systick_clock_timer = "*"
+#a0b_stm32f401_tim11_timer = "*"
 a0b_stm32f401_usart = "*"
+a0b_timer = "*"
+light_blackpill_stm32f401 = "*"
 
 [[pins]]
 a0b_spi = { path='../a0b-spi' }

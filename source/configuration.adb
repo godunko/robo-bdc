@@ -4,6 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with A0B.ARMv7M.SysTick_Clock_Timer;
 with A0B.STM32F401.SVD.ADC;
 with A0B.STM32F401.SVD.RCC;
 with A0B.STM32F401.SVD.TIM;
@@ -59,6 +60,10 @@ is
 
    procedure Initialize is
    begin
+      A0B.ARMv7M.SysTick_Clock_Timer.Initialize
+        (Use_Processor_Clock => True,
+         Clock_Frequency     => 84_000_000);
+
       Initialize_GPIO;
       Initialize_DMA;
       Initialize_UART;
