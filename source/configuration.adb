@@ -7,6 +7,8 @@
 with A0B.ARMv7M.NVIC_Utilities;
 with A0B.ARMv7M.SysTick_Clock_Timer;
 with A0B.STM32G474.Interrupts;
+with A0B.STM32G474.SVD.ADC;
+with A0B.STM32G474.SVD.RCC;
 --  with A0B.STM32F401.SVD.ADC;
 --  with A0B.STM32F401.SVD.RCC;
 --  with A0B.STM32F401.SVD.TIM;
@@ -18,6 +20,14 @@ package body Configuration
   with Preelaborate
 is
 
+   --  ADC1_OPAMP1  : constant := 13;
+   --  ADC1_VTS     : constant := 16;
+   --  ADC1_VBAT_3  : constant := 17;
+   --  ADC1_VREFINT : constant := 18;
+   --
+   --  ADC2_OPAMP2  : constant := 16;
+   --  ADC2_OPAMP3  : constant := 18;
+
    procedure USART1_Handler
      with Export, Convention => C, External_Name => "USART1_Handler";
 
@@ -27,13 +37,13 @@ is
    --  --  1/1/3_360: PWM 25kHz CPU @84MHz (nominal for L298)
    --  ADC_Cycle : constant := 560;
    --  --  1/1/560: 6x ADC samples per PWM cycle
-   --
-   --  procedure Initialize_GPIO;
-   --
-   --  procedure Initialize_DMA;
-   --
-   --  procedure Initialize_ADC1;
-   --
+
+   procedure Initialize_GPIO;
+
+   procedure Initialize_DMA;
+
+   procedure Initialize_ADC1;
+
    --  procedure Initialize_TIM3;
    --  --  Configure TIM3 to generate PWM. Timer is disabled. It generates TRGO on
    --  --  CEN set.
@@ -70,23 +80,332 @@ is
         (Use_Processor_Clock => True,
          Clock_Frequency     => 150_000_000);
 
-   --     Initialize_GPIO;
-   --     Initialize_DMA;
+      Initialize_GPIO;
+      Initialize_DMA;
       Initialize_Console_UART;
-   --     Initialize_ADC1;
+      Initialize_ADC1;
    --     Initialize_TIM3;
    --     Initialize_TIM4;
    --     Initialize_TIM5;
    end Initialize;
 
-   --  ---------------------
-   --  -- Initialize_ADC1 --
-   --  ---------------------
-   --
-   --  procedure Initialize_ADC1 is
-   --     use A0B.STM32F401.SVD.ADC;
-   --
-   --  begin
+   ---------------------
+   -- Initialize_ADC1 --
+   ---------------------
+
+   procedure Initialize_ADC1 is
+      --  use A0B.STM32F401.SVD.ADC;
+
+      procedure Initialize_ADC1;
+
+      procedure Initialize_ADC12_Clock;
+      --  ADC12 clock
+
+      procedure Initialize_ADC12_Common;
+      --  ADC1/ADC2 Common peripheral
+
+      procedure Start_ADC1_Operations;
+      --  Left Deep-power-down mode and activate voltage regulator
+
+      procedure Enable_ADC1;
+
+      -----------------
+      -- Enable_ADC1 --
+      -----------------
+
+      procedure Enable_ADC1 is
+      begin
+         A0B.STM32G474.SVD.ADC.ADC1_Periph.ISR :=
+           (ADRDY => True, others => <>);
+         --  1. Clear the ADRDY bit in the ADC_ISR register by writing 1.
+
+         A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+           (ADEN => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+         --  2. Set ADEN.
+
+         while not A0B.STM32G474.SVD.ADC.ADC1_Periph.ISR.ADRDY loop
+            --  3. Wait until ADRDY = 1 (ADRDY is set after the ADC startup
+            --  time). This can be done using the associated interrupt (setting
+            --  ADRDYIE = 1).
+
+            null;
+         end loop;
+
+         A0B.STM32G474.SVD.ADC.ADC1_Periph.ISR :=
+           (ADRDY => True, others => <>);
+         --  4. Clear the ADRDY bit in the ADC_ISR register by writing 1
+         --  (optional).
+      end Enable_ADC1;
+
+      ---------------------
+      -- Initialize_ADC1 --
+      ---------------------
+
+      procedure Initialize_ADC1 is
+      begin
+         --  ADC interrupt enable register (ADC_IER)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.IER_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.IER;
+
+         begin
+            Value.ADRDYIE := False;  --  0: ADRDY interrupt disabled
+            Value.EOSMPIE := False;  --  0: EOSMP interrupt disabled
+            Value.EOCIE   := False;  --  0: EOC interrupt disabled
+            Value.EOSIE   := False;  --  0: EOS interrupt disabled
+            Value.OVRIE   := False;  --  0: Overrun interrupt disabled
+            Value.JEOCIE  := False;  --  0: JEOC interrupt disabled
+            Value.JEOSIE  := False;  --  0: JEOS interrupt disabled
+            Value.AWD1IE  := False;  --  0: Analog watchdog 1 interrupt disabled
+            Value.AWD2IE  := False;  --  0: Analog watchdog 1 interrupt disabled
+            Value.AWD3IE  := False;  --  0: Analog watchdog 3 interrupt disabled
+            Value.JQOVFIE := False;
+            --  0: Injected Context Queue Overflow interrupt disabled
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.IER := Value;
+         end;
+
+         --  ADC control register (ADC_CR)
+
+         --  declare
+         --     Value : A0B.STM32G474.SVD.ADC.CR_Register
+         --       := A0B.STM32G474.SVD.ADC.ADC1_Periph.CR;
+         --
+         --  begin
+         --     Value.ADEN     := False;  --  <>
+         --     Value.ADDIS    := False;  --  <>
+         --     --  Value.ADDIS    := True;   --  1: Write 1 to disable the ADC
+         --     Value.ADSTART  := False;  --  <>
+         --     Value.JADSTART := False;  --  <>
+         --     Value.ADSTP    := False;  --  <>
+         --     Value.JADSTP   := False;  --  <>
+         --     Value.ADVREGEN := True;   --  1: ADC Voltage regulator enabled
+         --     Value.DEEPPWD  := False;  --  0: ADC not in Deep-power down
+         --     Value.ADCALDIF := False;  --  <>
+         --     Value.ADCAL    := False;  --  <>
+         --
+         --     A0B.STM32G474.SVD.ADC.ADC1_Periph.CR := Value;
+         --  end;
+
+         --  ADC configuration register (ADC_CFGR)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.CFGR_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.CFGR;
+
+         begin
+            Value.DMAEN   := False;     --  0: DMA disabled
+            Value.DMACFG  := False;     --  <> 0: DMA One Shot mode selected
+            Value.RES     := 2#00#;     --  00: 12-bit
+            Value.EXTSEL  := 2#00000#;  --  <>
+            Value.EXTEN   := 2#00#;
+            --  00: Hardware trigger detection disabled (conversions can be
+            --  launched by software)
+            Value.OVRMOD  := False;
+            --  0: ADC_DR register is preserved with the old data when an
+            --  overrun is detected.
+            Value.CONT    := False;     --  0: Single conversion mode
+            Value.AUTDLY  := False;     --  0: Auto-delayed conversion mode off
+            Value.ALIGN   := False;     --  0: Right alignment
+            Value.DISCEN  := False;
+            --  0: Discontinuous mode for regular channels disabled
+            Value.DISCNUM := 0;         --  <>
+            Value.JDISCEN := False;
+            --  0: Discontinuous mode on injected channels disabled
+            Value.JQM     := False;
+            --  0: JSQR mode 0: The Queue is never empty and maintains the last
+            --  written configuration into JSQR
+            Value.AWD1SGL := False;
+            --  0: Analog watchdog 1 enabled on all channels
+            Value.AWD1EN  := False;
+            --  0: Analog watchdog 1 disabled on regular channels
+            Value.JAWD1EN := False;
+            --  0: Analog watchdog 1 disabled on injected channels
+            Value.JAUTO   := False;
+            --  0: Automatic injected group conversion disabled
+            Value.AWD1CH  := 2#00000#;  --  <>
+            Value.JQDIS   := True;      --  1: Injected Queue disabled
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.CFGR := Value;
+         end;
+
+         --  ADC configuration register 2 (ADC_CFGR2)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.CFGR2_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.CFGR2;
+
+         begin
+            Value.ROVSE   := False;    --  0: Regular Oversampling disabled
+            Value.JOVSE   := False;    --  0: Injected Oversampling disabled
+            Value.OVSR    := 2#000#;   --  <>
+            Value.OVSS    := 2#0000#;  --  <>
+            Value.TROVS   := False;
+            --  0: All oversampled conversions for a channel are done
+            --  consecutively following a trigger
+            Value.ROVSM   := False;
+            --  0: Continued mode: When injected conversions are triggered,
+            --  the oversampling is temporary stopped and continued after the
+            --  injection sequence (oversampling buffer is maintained during
+            --  injected sequence)
+            Value.GCOMP   := False;    --  0: Regular ADC operating mode
+            Value.SWTRIG  := False;
+            --  0: Software trigger starts the conversion for sampling time
+            --  control trigger mode
+            Value.BULB    := False;    --  0: Bulb sampling mode disabled
+            Value.SMPTRIG := False;
+            --  0: Sampling time control trigger mode disabled
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.CFGR2 := Value;
+         end;
+
+         --  ADC sample time register 1 (ADC_SMPR1)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.SMPR1_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.SMPR1;
+
+         begin
+            Value.SMPPLUS := False;
+            --  0: The sampling time remains set to 2.5 ADC clock cycles
+            --  remains
+            Value.SMP.Arr := (others => 2#001#);  --  000: 6.5 ADC clock cycles
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.SMPR1 := Value;
+         end;
+
+         --  ADC sample time register 2 (ADC_SMPR2)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.SMPR2_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.SMPR2;
+
+         begin
+            Value.SMP.Arr := (others => 2#001#);  --  000: 6.5 ADC clock cycles
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.SMPR2 := Value;
+         end;
+
+         --  ADC watchdog threshold register 1 (ADC_TR1)
+         --  ADC watchdog threshold register 2 (ADC_TR2)
+         --  ADC watchdog threshold register 3 (ADC_TR3)
+
+         --  ADC regular sequence register 1 (ADC_SQR1)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.SQR1_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR1;
+
+         begin
+            Value.L   := 2#0000#;  --  1 conversion
+            Value.SQ1 := 1;        --  ADC1_IN1
+            --  Value.SQ1 := ADC1_VREFINT;
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR1 := Value;
+         end;
+
+         --  ADC regular sequence register 2 (ADC_SQR2)
+         --  ADC regular sequence register 3 (ADC_SQR3)
+         --  ADC regular sequence register 4 (ADC_SQR4)
+         --  ADC injected sequence register (ADC_JSQR)
+         --  ADC offset y register (ADC_OFRy)
+         --  ADC analog watchdog 2 configuration register (ADC_AWD2CR)
+         --  ADC analog watchdog 3 configuration register (ADC_AWD3CR)
+         --  ADC differential mode selection register (ADC_DIFSEL)
+         --  ADC calibration factors (ADC_CALFACT)
+         --  ADC Gain compensation Register (ADC_GCOMP)
+      end Initialize_ADC1;
+
+      ----------------------------
+      -- Initialize_ADC12_Clock --
+      ----------------------------
+
+      procedure Initialize_ADC12_Clock is
+      begin
+         --  A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_APB1ENR1.PWREN :=
+         --    A0B.STM32G474.SVD.RCC.B_0x1;
+         --  A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_APB2ENR.SYSCFGEN :=
+         --    A0B.STM32G474.SVD.RCC.B_0x1;
+
+         --  System clock (150 MHz) is used as source clock for ADC.
+
+         A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_CCIPR.ADC12SEL :=
+           A0B.STM32G474.SVD.RCC.B_0x2;
+         --  System clock selected as ADC1/2 clock
+         A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_AHB2ENR.ADC12EN :=
+           A0B.STM32G474.SVD.RCC.B_0x1;
+      end Initialize_ADC12_Clock;
+
+      -----------------------------
+      -- Initialize_ADC12_Common --
+      -----------------------------
+
+      procedure Initialize_ADC12_Common is
+      begin
+         --  ADC12 common control register (ADC12_CCR)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.CCR_Register
+              := A0B.STM32G474.SVD.ADC.ADC12_Common_Periph.CCR;
+
+         begin
+            Value.DUAL      := 2#00000#;  --  00000: Independent mode
+            Value.DELAY_k   := 2#0000#;   --  <>
+            Value.DMACFG    := False;     --  0: DMA One Shot mode selected
+            Value.MDMA      := 2#00#;     --  00: MDMA mode disabled
+            Value.CKMODE    := 2#11#;
+            --  11: adc_hclk/4 (Synchronous clock mode)
+            Value.PRESC     := 2#00000#;  --  0000: input ADC clock not divided
+            Value.VREFEN    := True;      --  1: VREFINT channel enabled
+            Value.VSENSESEL := False;
+            --  0: Temperature sensor channel disabled
+            Value.VBATSEL   := False;
+            --  0: VBAT channel disabled.
+
+            Value.VSENSESEL := True;
+            Value.VBATSEL   := True;
+
+            A0B.STM32G474.SVD.ADC.ADC12_Common_Periph.CCR := Value;
+         end;
+      end Initialize_ADC12_Common;
+
+      ---------------------------
+      -- Start_ADC1_Operations --
+      ---------------------------
+
+      procedure Start_ADC1_Operations is
+         CPU_Cycles_Per_Second      : constant := 150_000_000;
+         CPU_Cycles_Per_Microsecond : constant :=
+           CPU_Cycles_Per_Second / 1_000_000;
+         T_Start_Vrefint            : constant := 12;
+         --  Start time of reference voltage buffer when ADC is enable,
+         --  microseconds
+         Start_Vrefint_Cycles       : constant :=
+           CPU_Cycles_Per_Microsecond * T_Start_Vrefint;
+
+      begin
+         A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+           (DEEPPWD => False, others => <>);
+         A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+           (DEEPPWD => False, ADVREGEN => True, others => <>);
+
+         for J in 1 .. Start_Vrefint_Cycles loop
+            null;
+         end loop;
+      end Start_ADC1_Operations;
+
+   begin
+      Initialize_ADC12_Clock;
+      Initialize_ADC1;
+      Initialize_ADC12_Common;
+
+      Start_ADC1_Operations;
+      Enable_ADC1;
+
+      --  A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+      --    (ADEN => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+
    --     A0B.STM32F401.SVD.RCC.RCC_Periph.APB2ENR.ADC1EN := True;
    --
    --     --  Clear SR - Not needed
@@ -232,36 +551,39 @@ is
    --     --  Enable ADC
    --
    --     ADC1_Periph.CR2.ADON := True;
-   --  end Initialize_ADC1;
-   --
-   --  --------------------
-   --  -- Initialize_DMA --
-   --  --------------------
-   --
-   --  procedure Initialize_DMA is
-   --  begin
-   --     ADC1_DMA_Stream.Configure_Peripheral_To_Memory
-   --       (Channel              => 0,
-   --        Peripheral           => A0B.STM32F401.SVD.ADC.ADC1_Periph.DR'Address,
-   --        Peripheral_Data_Size => A0B.STM32F401.DMA.Half_Word,
-   --        Memory_Data_Size     => A0B.STM32F401.DMA.Half_Word,
-   --        Circular_Mode        => True);
-   --  end Initialize_DMA;
-   --
-   --  ---------------------
-   --  -- Initialize_GPIO --
-   --  ---------------------
-   --
-   --  procedure Initialize_GPIO is
-   --  begin
-   --     --  ADC1 input
-   --
-   --     M1_C_Pin.Configure_Analog;
-   --     M1_P_Pin.Configure_Analog;
-   --     M2_C_Pin.Configure_Analog;
-   --     M2_P_Pin.Configure_Analog;
-   --     M3_C_Pin.Configure_Analog;
-   --     M3_P_Pin.Configure_Analog;
+   end Initialize_ADC1;
+
+   --------------------
+   -- Initialize_DMA --
+   --------------------
+
+   procedure Initialize_DMA is
+   begin
+      ADC1_DMA_CH.DMA_CH.Initialize;
+      ADC1_DMA_CH.DMA_CH.Configure_Peripheral_To_Memory
+        (Priority             => A0B.STM32_DMA.Very_High,
+         Peripheral_Address   => A0B.STM32G474.SVD.ADC.ADC1_Periph.DR'Address,
+         Peripheral_Data_Size => A0B.STM32_DMA.Half_Word,
+         Memory_Data_Size     => A0B.STM32_DMA.Half_Word,
+         Circular_Mode        => False);
+         --  Circular_Mode        => True);
+   end Initialize_DMA;
+
+   ---------------------
+   -- Initialize_GPIO --
+   ---------------------
+
+   procedure Initialize_GPIO is
+   begin
+      null;
+      --  ADC1 input
+
+      --  M1_C_Pin.Configure_Analog;
+      M1_P_Pin.Initialize_Analog;
+      --  M2_C_Pin.Configure_Analog;
+      --  M2_P_Pin.Configure_Analog;
+      --  M3_C_Pin.Configure_Analog;
+      --  M3_P_Pin.Configure_Analog;
    --     M4_C_Pin.Configure_Analog;
    --     M4_P_Pin.Configure_Analog;
    --
@@ -310,10 +632,10 @@ is
    --        Mode  => A0B.STM32F401.GPIO.Push_Pull,
    --        Speed => A0B.STM32F401.GPIO.Very_High,
    --        Pull  => A0B.STM32F401.GPIO.Pull_Up);
-   --
-   --     --  USART's input/output pins are configured by the USART driver
-   --  end Initialize_GPIO;
-   --
+
+      --  USART's input/output pins are configured by the USART driver
+   end Initialize_GPIO;
+
    --  ---------------------
    --  -- Initialize_TIM3 --
    --  ---------------------

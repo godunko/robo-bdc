@@ -39,10 +39,11 @@ a0b_spi = { path='../a0b-spi' }
 a0b_stm32f0_generic_usart = { path='../a0b-stm32f0-generic_usart' }
 a0b_stm32f1_generic_dma = { path='../a0b-stm32f1-generic_dma' }
 a0b_stm32f1_generic_dma_light = { path='../a0b-stm32f1-generic_dma-light' }
+a0b_stm32f2_generic_gpio = { path='../a0b-stm32f2-generic_gpio' }
 a0b_stm32g4 = { path='../a0b-stm32g4' }
 a0b_stm32g4_dma = { path='../a0b-stm32g4-dma' }
 a0b_stm32g474 = { path='../a0b-stm32g474' }
 #a0b_stm32f401_dma = { path='../a0b-stm32f401-dma' }
-#a0b_stm32f401_gpio = { path='../a0b-stm32f401-gpio' }
+a0b_stm32g474_gpio = { path='../a0b-stm32g474-gpio' }
 #a0b_stm32f401_usart = { path='../a0b-stm32f401-usart' }
 light_weact_stm32g474 = { path='../light-startup/weact_stm32g474' }

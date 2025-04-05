@@ -9,7 +9,9 @@ with A0B.STM32_USART.Generic_F0_USARTs.Generic_H7_USART;
 with A0B.STM32G4.DMA;
 with A0B.STM32G474.DMA.Generic_CH0;
 with A0B.STM32G474.DMA.Generic_CH1;
-
+with A0B.STM32G474.DMA.Generic_CH2;
+with A0B.STM32G474.GPIO;
+with A0B.STM32G474.GPIOA;
 --  with A0B.STM32F401.DMA.DMA2.Stream0;
 --  with A0B.STM32F401.DMA.DMA2.Stream5;
 --  with A0B.STM32F401.GPIO.PIOA;
@@ -83,6 +85,9 @@ is
       Transmit_Channel => UART_TX_DMA_CH.DMA_CH'Access,
       Transmit_Line    => A0B.STM32G4.DMA.USART1_RX);
 
+   package ADC1_DMA_CH is
+     new A0B.STM32G474.DMA.Generic_CH2 (A0B.STM32G4.DMA.ADC1);
+
 private
 
    --  M1_IN1_Pin : A0B.STM32F401.GPIO.GPIO_Line
@@ -101,11 +106,11 @@ private
    --    renames A0B.STM32F401.GPIO.PIOB.PB8;  --  TIM4_CH3
    --  M4_IN2_Pin : A0B.STM32F401.GPIO.GPIO_Line
    --    renames A0B.STM32F401.GPIO.PIOB.PB9;  --  TIM4_CH4
-   --
+
    --  M1_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
    --    renames A0B.STM32F401.GPIO.PIOA.PA0;  --  ADC1_IN0
-   --  M1_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
-   --    renames A0B.STM32F401.GPIO.PIOA.PA1;  --  ADC1_IN1
+   M1_P_Pin   : A0B.STM32G474.GPIO.GPIO_EXTI_Line
+     renames A0B.STM32G474.GPIOA.PA0;  --  ADC1_IN1
    --  M2_C_Pin   : A0B.STM32F401.GPIO.GPIO_Line
    --    renames A0B.STM32F401.GPIO.PIOA.PA2;  --  ADC1_IN2
    --  M2_P_Pin   : A0B.STM32F401.GPIO.GPIO_Line
