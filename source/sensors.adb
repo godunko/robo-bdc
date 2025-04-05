@@ -7,6 +7,7 @@
 pragma Ada_2022;
 
 with A0B.Callbacks.Generic_Parameterless;
+with A0B.STM32G474.SVD.ADC;
 
 with Configuration;
 with Console;
@@ -60,7 +61,7 @@ package body Sensors is
 
       procedure Put (Item : A0B.Types.Unsigned_16) is
          Image  : constant String := A0B.Types.Unsigned_16'Image (Item);
-         Buffer : String (1 .. 5) := (others => ' ');
+         Buffer : String (1 .. 5) := [others => ' '];
 
       begin
          Buffer (Buffer'Last - Image'Length + 1 .. Buffer'Last) := Image;
@@ -129,10 +130,17 @@ package body Sensors is
    ----------------
 
    procedure Initialize is
-      --  use type A0B.Types.Unsigned_16;
+      use type A0B.Types.Unsigned_16;
 
    begin
+      Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
+        (Memory_Address  => Buffer'Address,
+         Number_Of_Items => Buffer'Length * 9);
+
+      Configuration.ADC1_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
+        (On_Conversion_Done_Callbacks.Create_Callback);
       null;
+
       --  Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
       --    (Memory    => Buffer'Address,
       --     Count     => Buffer'Length * 9,
@@ -142,6 +150,12 @@ package body Sensors is
       --    (On_Conversion_Done_Callbacks.Create_Callback);
       --  Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
       --  Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
+
+      Configuration.ADC1_DMA_CH.DMA_CH.Enable;
+
+      A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+        (ADSTART => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+
    end Initialize;
 
    ------------------------
@@ -149,10 +163,13 @@ package body Sensors is
    ------------------------
 
    procedure On_Conversion_Done is
-      F : Positive;
-      L : Positive;
+      --  F : Positive;
+      --  L : Positive;
 
    begin
+      Configuration.ADC1_DMA_CH.DMA_CH.Disable;
+
+      raise Program_Error;
       --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
       --     if Last <= Data'Last - Buffer'Length / 2 then
       --        F := Buffer'First;

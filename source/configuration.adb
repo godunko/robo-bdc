@@ -195,7 +195,7 @@ is
               := A0B.STM32G474.SVD.ADC.ADC1_Periph.CFGR;
 
          begin
-            Value.DMAEN   := False;     --  0: DMA disabled
+            Value.DMAEN   := True;      --  1: DMA enabled
             Value.DMACFG  := False;     --  <> 0: DMA One Shot mode selected
             Value.RES     := 2#00#;     --  00: 12-bit
             Value.EXTSEL  := 2#00000#;  --  <>
