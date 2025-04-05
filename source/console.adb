@@ -6,9 +6,9 @@
 
 pragma Restrictions (No_Elaboration_Code);
 
-with A0B.STM32F401.USART;
+with A0B.Asynchronous_Operations;
+with A0B.Awaits;
 
-with Awaits;
 with Configuration;
 
 package body Console is
@@ -18,22 +18,20 @@ package body Console is
    ---------
 
    procedure Get (Item : out Character) is
-      Buffers : A0B.STM32F401.USART.Buffer_Descriptor_Array (0 .. 0);
+      Buffer  : A0B.Asynchronous_Operations.Transfer_Descriptor :=
+        (Buffer      => Item'Address,
+         Length      => 1,
+         Transferred => <>,
+         State       => <>);
+      Await   : aliased A0B.Awaits.Await;
       Success : Boolean := True;
 
    begin
-      Buffers (0) :=
-        (Address     => Item'Address,
-         Size        => 1,
-         Transferred => <>,
-         State       => <>);
-
-      Configuration.UART1.USART1_Asynchronous.Receive
-        (Buffers  => Buffers,
-         Finished => Awaits.Create_Callback,
+      Configuration.Console_UART.Receive
+        (Buffer   => Buffer,
+         Finished => A0B.Awaits.Create_Callback (Await),
          Success  => Success);
-
-      Awaits.Suspend_Until_Callback (Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
    end Get;
 
    --------------
@@ -62,22 +60,20 @@ package body Console is
    ---------
 
    procedure Put (Item : String) is
-      Buffers : A0B.STM32F401.USART.Buffer_Descriptor_Array (0 .. 0);
+      Buffer  : A0B.Asynchronous_Operations.Transfer_Descriptor :=
+        (Buffer      => Item (Item'First)'Address,
+         Length      => Item'Length,
+         Transferred => <>,
+         State       => <>);
+      Await   : aliased A0B.Awaits.Await;
       Success : Boolean := True;
 
    begin
-      Buffers (0) :=
-        (Address     => Item (Item'First)'Address,
-         Size        => Item'Length,
-         Transferred => <>,
-         State       => <>);
-
-      Configuration.UART1.USART1_Asynchronous.Transmit
-        (Buffers  => Buffers,
-         Finished => Awaits.Create_Callback,
+      Configuration.Console_UART.Transmit
+        (Buffer   => Buffer,
+         Finished => A0B.Awaits.Create_Callback (Await),
          Success  => Success);
-
-      Awaits.Suspend_Until_Callback (Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
    end Put;
 
    --------------

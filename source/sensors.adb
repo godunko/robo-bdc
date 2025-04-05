@@ -129,18 +129,19 @@ package body Sensors is
    ----------------
 
    procedure Initialize is
-      use type A0B.Types.Unsigned_16;
+      --  use type A0B.Types.Unsigned_16;
 
    begin
-      Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
-        (Memory    => Buffer'Address,
-         Count     => Buffer'Length * 9,
-         Increment => True);
-      Configuration.ADC1_DMA_Stream.Enable;
-      Configuration.ADC1_DMA_Stream.Set_Interrupt_Callback
-        (On_Conversion_Done_Callbacks.Create_Callback);
-      Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
-      Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
+      null;
+      --  Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
+      --    (Memory    => Buffer'Address,
+      --     Count     => Buffer'Length * 9,
+      --     Increment => True);
+      --  Configuration.ADC1_DMA_Stream.Enable;
+      --  Configuration.ADC1_DMA_Stream.Set_Interrupt_Callback
+      --    (On_Conversion_Done_Callbacks.Create_Callback);
+      --  Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
+      --  Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
    end Initialize;
 
    ------------------------
@@ -152,48 +153,49 @@ package body Sensors is
       L : Positive;
 
    begin
-      if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
-         if Last <= Data'Last - Buffer'Length / 2 then
-            F := Buffer'First;
-            L := Buffer'Length / 2;
-
-            Data (Last + 1 .. Last + Buffer'Length / 2) :=
-              Buffer (Buffer'First .. Buffer'Length / 2);
-            Last := @ + Buffer'Length / 2;
-         end if;
-
-         Current := Buffer (Buffer'Length / 2);
-      end if;
-
-      if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
-      then
-         F := Buffer'First;
-         L := Buffer'Length / 2;
-
-         if Last <= Data'Last - Buffer'Length / 2 then
-            Data (Last + 1 .. Last + Buffer'Length / 2) :=
-              Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
-            Last := @ + Buffer'Length / 2;
-         end if;
-
-         Current := Buffer (Buffer'Last);
-      end if;
-
-      declare
-         use type A0B.Types.Unsigned_32;
-
-         A : A0B.Types.Unsigned_32 := 0;
-
-      begin
-         for J in F .. L loop
-            A := @ + A0B.Types.Unsigned_32 (Buffer (J).M1_Position);
-         end loop;
-
-         Average_Position :=
-           A0B.Types.Unsigned_16 (A / A0B.Types.Unsigned_32 (L - F + 1));
-      end;
-
-      Control.Iteration;
+      --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
+      --     if Last <= Data'Last - Buffer'Length / 2 then
+      --        F := Buffer'First;
+      --        L := Buffer'Length / 2;
+      --
+      --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
+      --          Buffer (Buffer'First .. Buffer'Length / 2);
+      --        Last := @ + Buffer'Length / 2;
+      --     end if;
+      --
+      --     Current := Buffer (Buffer'Length / 2);
+      --  end if;
+      --
+      --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
+      --  then
+      --     F := Buffer'First;
+      --     L := Buffer'Length / 2;
+      --
+      --     if Last <= Data'Last - Buffer'Length / 2 then
+      --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
+      --          Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
+      --        Last := @ + Buffer'Length / 2;
+      --     end if;
+      --
+      --     Current := Buffer (Buffer'Last);
+      --  end if;
+      --
+      --  declare
+      --     use type A0B.Types.Unsigned_32;
+      --
+      --     A : A0B.Types.Unsigned_32 := 0;
+      --
+      --  begin
+      --     for J in F .. L loop
+      --        A := @ + A0B.Types.Unsigned_32 (Buffer (J).M1_Position);
+      --     end loop;
+      --
+      --     Average_Position :=
+      --       A0B.Types.Unsigned_16 (A / A0B.Types.Unsigned_32 (L - F + 1));
+      --  end;
+      --
+      --  Control.Iteration;
+      null;
    end On_Conversion_Done;
 
 end Sensors;

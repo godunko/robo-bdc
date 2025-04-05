@@ -6,14 +6,14 @@
 
 with "../config/robo_bdc_config";
 
-with "light_blackpill_stm32f401";
+with "light_weact_stm32g474";
 
 project Robo_BDC is
 
-   for Target use Light_Blackpill_STM32F401'Target;
-   for Runtime use Light_Blackpill_STM32F401'Runtime;
+   for Target use Light_WeAct_STM32G474'Target;
+   for Runtime use Light_WeAct_STM32G474'Runtime;
 
-   for Source_Dirs use ("../source");
+   for Source_Dirs use ("../source", "../../console/source");
    for Object_Dir use "../.objs/";
    for Exec_Dir use "../bin/";
    for Main use ("driver.adb");
@@ -24,13 +24,13 @@ project Robo_BDC is
 
    package Compiler is
       for Switches ("Ada") use
-       	Light_Blackpill_STM32F401.Compiler_Switches
+       	Light_WeAct_STM32G474.Compiler_Switches
           & Robo_BDC_Config.Ada_Compiler_Switches;
    end Compiler;
 
    package Linker is
       for Switches ("Ada") use
-        Light_Blackpill_STM32F401.Linker_Switches
+        Light_WeAct_STM32G474.Linker_Switches
          & ("-Wl,--gc-sections");
    end Linker;
 

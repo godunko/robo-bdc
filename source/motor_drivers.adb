@@ -4,7 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with A0B.STM32F401.SVD.TIM;
+--  with A0B.STM32F401.SVD.TIM;
 with A0B.Types;
 
 package body Motor_Drivers is
@@ -36,12 +36,13 @@ package body Motor_Drivers is
      (CCR1 : A0B.Types.Unsigned_16;
       CCR2 : A0B.Types.Unsigned_16)
    is
-      TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
-        renames A0B.STM32F401.SVD.TIM.TIM3_Periph;
-
+      --  TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
+      --    renames A0B.STM32F401.SVD.TIM.TIM3_Periph;
+      --
    begin
-      TIM.CCR1.CCR1_L := CCR1;
-      TIM.CCR2.CCR2_L := CCR2;
+      raise Program_Error;
+   --     TIM.CCR1.CCR1_L := CCR1;
+   --     TIM.CCR2.CCR2_L := CCR2;
    end Set_1;
 
    -----------
@@ -52,12 +53,13 @@ package body Motor_Drivers is
      (CCR1 : A0B.Types.Unsigned_16;
       CCR2 : A0B.Types.Unsigned_16)
    is
-      TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
-        renames A0B.STM32F401.SVD.TIM.TIM3_Periph;
+      --  TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
+      --    renames A0B.STM32F401.SVD.TIM.TIM3_Periph;
 
    begin
-      TIM.CCR3.CCR3_L := CCR1;
-      TIM.CCR4.CCR4_L := CCR2;
+      raise Program_Error;
+      --  TIM.CCR3.CCR3_L := CCR1;
+      --  TIM.CCR4.CCR4_L := CCR2;
    end Set_2;
 
    -----------
@@ -68,12 +70,13 @@ package body Motor_Drivers is
      (CCR1 : A0B.Types.Unsigned_16;
       CCR2 : A0B.Types.Unsigned_16)
    is
-      TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
-        renames A0B.STM32F401.SVD.TIM.TIM4_Periph;
+      --  TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
+      --    renames A0B.STM32F401.SVD.TIM.TIM4_Periph;
 
    begin
-      TIM.CCR1.CCR1_L := CCR1;
-      TIM.CCR2.CCR2_L := CCR2;
+      raise Program_Error;
+      --  TIM.CCR1.CCR1_L := CCR1;
+      --  TIM.CCR2.CCR2_L := CCR2;
    end Set_3;
 
    -----------
@@ -84,12 +87,13 @@ package body Motor_Drivers is
      (CCR1 : A0B.Types.Unsigned_16;
       CCR2 : A0B.Types.Unsigned_16)
    is
-      TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
-        renames A0B.STM32F401.SVD.TIM.TIM4_Periph;
+      --  TIM : A0B.STM32F401.SVD.TIM.TIM3_Peripheral
+      --    renames A0B.STM32F401.SVD.TIM.TIM4_Periph;
 
    begin
-      TIM.CCR3.CCR3_L := CCR1;
-      TIM.CCR4.CCR4_L := CCR2;
+      raise Program_Error;
+      --  TIM.CCR3.CCR3_L := CCR1;
+      --  TIM.CCR4.CCR4_L := CCR2;
    end Set_4;
 
    ------------------

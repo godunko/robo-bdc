@@ -17,14 +17,32 @@ generate_gpr = true
 
 [[depends-on]]
 a0b_armv7m_systick_clock_timer = "*"
-#a0b_stm32f401_tim11_timer = "*"
-a0b_stm32f401_usart = "*"
+a0b_awaits_armv7m = "*"
 a0b_timer = "*"
-light_blackpill_stm32f401 = "*"
+a0b_stm32g474_gpio = "*"
+light_weact_stm32g474 = "*"
+
+[[depends-on]]
+#a0b_stm32f401_tim11_timer = "*"
+#a0b_stm32f401_usart = "*"
+a0b_stm32f0_generic_usart = "*"
+a0b_stm32f1_generic_dma = "*"
+a0b_stm32f1_generic_dma_light = "*"
+a0b_stm32g4_dma = "*"
 
 [[pins]]
+a0b_armv7m = { path='../a0b-armv7m' }
+a0b_asynchronous_operations = { path='../a0b-asynchronous_operations' }
+a0b_awaits_armv7m = { path='../a0b-awaits-armv7m' }
+a0b_base = { path='../a0b-base' }
 a0b_spi = { path='../a0b-spi' }
-a0b_stm32f401_dma = { path='../a0b-stm32f401-dma' }
-a0b_stm32f401_gpio = { path='../a0b-stm32f401-gpio' }
-a0b_stm32f401_usart = { path='../a0b-stm32f401-usart' }
-light_blackpill_stm32f401 = { path='../light-startup/blackpill_stm32f401' }
+a0b_stm32f0_generic_usart = { path='../a0b-stm32f0-generic_usart' }
+a0b_stm32f1_generic_dma = { path='../a0b-stm32f1-generic_dma' }
+a0b_stm32f1_generic_dma_light = { path='../a0b-stm32f1-generic_dma-light' }
+a0b_stm32g4 = { path='../a0b-stm32g4' }
+a0b_stm32g4_dma = { path='../a0b-stm32g4-dma' }
+a0b_stm32g474 = { path='../a0b-stm32g474' }
+#a0b_stm32f401_dma = { path='../a0b-stm32f401-dma' }
+#a0b_stm32f401_gpio = { path='../a0b-stm32f401-gpio' }
+#a0b_stm32f401_usart = { path='../a0b-stm32f401-usart' }
+light_weact_stm32g474 = { path='../light-startup/weact_stm32g474' }
