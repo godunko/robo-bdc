@@ -9,6 +9,7 @@ with A0B.ARMv7M.SysTick_Clock_Timer;
 with A0B.STM32G474.Interrupts;
 with A0B.STM32G474.SVD.ADC;
 with A0B.STM32G474.SVD.RCC;
+with A0B.STM32G474.SVD.TIM;
 --  with A0B.STM32F401.SVD.ADC;
 --  with A0B.STM32F401.SVD.RCC;
 --  with A0B.STM32F401.SVD.TIM;
@@ -20,13 +21,37 @@ package body Configuration
   with Preelaborate
 is
 
-   --  ADC1_OPAMP1  : constant := 13;
-   --  ADC1_VTS     : constant := 16;
-   --  ADC1_VBAT_3  : constant := 17;
-   --  ADC1_VREFINT : constant := 18;
-   --
-   --  ADC2_OPAMP2  : constant := 16;
-   --  ADC2_OPAMP3  : constant := 18;
+   CPU_Frequency : constant := 150_000_000;
+
+   ADC12_INP1   : constant := 1;
+   ADC12_INP2   : constant := 2;
+   ADC1_INP3    : constant := 3;
+   ADC2_INP3    : constant := 3;
+   ADC1_INP4    : constant := 4;
+   ADC2_INP4    : constant := 4;
+   ADC1_INP5    : constant := 5;
+   ADC2_INP5    : constant := 5;
+   ADC12_INP6   : constant := 6;
+   ADC12_INP7   : constant := 7;
+   ADC12_INP8   : constant := 8;
+   ADC12_INP9   : constant := 9;
+   ADC1_INP10   : constant := 10;
+   ADC2_INP10   : constant := 10;
+   ADC1_INP11   : constant := 11;
+   ADC2_INP11   : constant := 11;
+   ADC1_INP12   : constant := 12;
+   ADC2_INP12   : constant := 12;
+   ADC1_OPAMP1  : constant := 13;
+   ADC2_INP13   : constant := 13;
+   ADC12_INP14  : constant := 14;
+   ADC1_INP15   : constant := 15;
+   ADC2_INP15   : constant := 15;
+   ADC1_VTS     : constant := 16;
+   ADC2_OPAMP2  : constant := 16;
+   ADC1_VBAT_3  : constant := 17;
+   ADC2_INP17   : constant := 17;
+   ADC1_VREFINT : constant := 18;
+   ADC2_OPAMP3  : constant := 18;
 
    procedure USART1_Handler
      with Export, Convention => C, External_Name => "USART1_Handler";
@@ -51,8 +76,9 @@ is
    --  procedure Initialize_TIM4;
    --  --  Configure TIM4 to generate PWM. Timer is disabled. It is configured to
    --  --  be triggered by set of CEN of TIM3.
-   --
-   --  procedure Initialize_TIM5;
+
+   procedure Initialize_TIM15;
+   --  Configure TIM15 to initiate ADC sampling.
    --  --  Configure TIM5 to initiate ADC sampling. Timer is disabled. It is
    --  --  configured to be triggered by set of CEN of TIM3.
 
@@ -78,7 +104,7 @@ is
    begin
       A0B.ARMv7M.SysTick_Clock_Timer.Initialize
         (Use_Processor_Clock => True,
-         Clock_Frequency     => 150_000_000);
+         Clock_Frequency     => CPU_Frequency);
 
       Initialize_GPIO;
       Initialize_DMA;
@@ -86,7 +112,7 @@ is
       Initialize_ADC1;
    --     Initialize_TIM3;
    --     Initialize_TIM4;
-   --     Initialize_TIM5;
+      Initialize_TIM15;
    end Initialize;
 
    ---------------------
@@ -157,9 +183,12 @@ is
             Value.OVRIE   := False;  --  0: Overrun interrupt disabled
             Value.JEOCIE  := False;  --  0: JEOC interrupt disabled
             Value.JEOSIE  := False;  --  0: JEOS interrupt disabled
-            Value.AWD1IE  := False;  --  0: Analog watchdog 1 interrupt disabled
-            Value.AWD2IE  := False;  --  0: Analog watchdog 1 interrupt disabled
-            Value.AWD3IE  := False;  --  0: Analog watchdog 3 interrupt disabled
+            Value.AWD1IE  := False;
+            --  0: Analog watchdog 1 interrupt disabled
+            Value.AWD2IE  := False;
+            --  0: Analog watchdog 1 interrupt disabled
+            Value.AWD3IE  := False;
+            --  0: Analog watchdog 3 interrupt disabled
             Value.JQOVFIE := False;
             --  0: Injected Context Queue Overflow interrupt disabled
 
@@ -198,10 +227,11 @@ is
             Value.DMAEN   := True;      --  1: DMA enabled
             Value.DMACFG  := False;     --  <> 0: DMA One Shot mode selected
             Value.RES     := 2#00#;     --  00: 12-bit
-            Value.EXTSEL  := 2#00000#;  --  <>
-            Value.EXTEN   := 2#00#;
-            --  00: Hardware trigger detection disabled (conversions can be
-            --  launched by software)
+            Value.EXTSEL  := 2#01110#;  --  adc_ext_trg14: tim15_trgo
+            Value.EXTEN   := 2#01#;
+            --  01: Hardware trigger detection on the rising edge
+            --  --  00: Hardware trigger detection disabled (conversions can be
+            --  --  launched by software)
             Value.OVRMOD  := False;
             --  0: ADC_DR register is preserved with the old data when an
             --  overrun is detected.
@@ -298,14 +328,31 @@ is
               := A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR1;
 
          begin
-            Value.L   := 2#0000#;  --  1 conversion
-            Value.SQ1 := 1;        --  ADC1_IN1
-            --  Value.SQ1 := ADC1_VREFINT;
+            --  Value.L   := 2#0010#;  --  3 conversions
+            Value.L   := 5;  --  6 conversions
+            Value.SQ1 := ADC1_VREFINT;
+            Value.SQ2 := ADC1_VREFINT;
+            Value.SQ3 := ADC12_INP1;
+            Value.SQ4 := ADC12_INP1;
+            --  Value.SQ3 := ADC1_OPAMP1;
+            --  Value.SQ4 := ADC1_OPAMP1;
 
             A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR1 := Value;
          end;
 
          --  ADC regular sequence register 2 (ADC_SQR2)
+
+         declare
+            Value : A0B.STM32G474.SVD.ADC.SQR2_Register
+              := A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR2;
+
+         begin
+            Value.SQ5 := ADC12_INP2;
+            Value.SQ6 := ADC12_INP2;
+
+            A0B.STM32G474.SVD.ADC.ADC1_Periph.SQR2 := Value;
+         end;
+
          --  ADC regular sequence register 3 (ADC_SQR3)
          --  ADC regular sequence register 4 (ADC_SQR4)
          --  ADC injected sequence register (ADC_JSQR)
@@ -375,9 +422,7 @@ is
       ---------------------------
 
       procedure Start_ADC1_Operations is
-         CPU_Cycles_Per_Second      : constant := 150_000_000;
-         CPU_Cycles_Per_Microsecond : constant :=
-           CPU_Cycles_Per_Second / 1_000_000;
+         CPU_Cycles_Per_Microsecond : constant := CPU_Frequency / 1_000_000;
          T_Start_Vrefint            : constant := 12;
          --  Start time of reference voltage buffer when ADC is enable,
          --  microseconds
@@ -1269,6 +1314,208 @@ is
       --
       --  UART1.USART1_Asynchronous.Configure (Configuration);
    end Initialize_Console_UART;
+
+   ----------------------
+   -- Initialize_TIM15 --
+   ----------------------
+
+   procedure Initialize_TIM15 is
+      TIM :A0B.STM32G474.SVD.TIM.TIM15_Peripheral
+        renames A0B.STM32G474.SVD.TIM.TIM15_Periph;
+
+   begin
+      A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_APB2ENR.TIM15EN :=
+        A0B.STM32G474.SVD.RCC.B_0x1;
+
+      --  TIM15 control register 1 (TIM15_CR1)
+
+      declare
+         Value : A0B.STM32G474.SVD.TIM.CR1_Register_2 := TIM.CR1;
+
+      begin
+         Value.CEN    := False;  --  0: Counter disabled
+         Value.UDIS   := False;
+         --  0: UEV enabled. The Update (UEV) event is generated by one of the
+         --  following events:
+         --    – Counter overflow/underflow
+         --    – Setting the UG bit
+         --    – Update generation through the slave mode controller
+         --  Buffered registers are then loaded with their preload values.
+         Value.URS    := False;
+         --  0: Any of the following events generate an update interrupt if
+         --  enabled. These events can be:
+         --    – Counter overflow/underflow
+         --    – Setting the UG bit
+         --    – Update generation through the slave mode controller
+         Value.OPM    := False;  --  0: Counter is not stopped at update event
+         Value.ARPE   := False;  --  0: TIM15_ARR register is not buffered
+         Value.CKD    := 2#00#;  --  00: tDTS = ttim_ker_ck
+         Value.UIFREMAP := False;
+         --  0: No remapping. UIF status bit is not copied to TIM15_CNT
+         --  register bit 31.
+         Value.DITHEN := False;  --  0: Dithering disabled
+
+         A0B.STM32G474.SVD.TIM.TIM15_Periph.CR1 := Value;
+      end;
+
+      --  TIM15 control register 2 (TIM15_CR2)
+
+      declare
+         Value : A0B.STM32G474.SVD.TIM.CR2_Register_2 := TIM.CR2;
+
+      begin
+         Value.CCPC  := False;
+         --  <> 0: CCxE, CCxNE and OCxM bits are not preloaded
+         Value.CCUS  := False;
+         --  <> 0: When capture/compare control bits are preloaded (CCPC=1),
+         --  they are updated by setting the COMG bit only.
+         Value.CCDS  := False;
+         --  <> 0: CCx DMA request sent when CCx event occurs
+         Value.MMS   := 2#010#;
+         --  010: Update - The update event is selected as trigger output
+         --  (tim_trgo). For instance a master timer can then be used as a
+         --  prescaler for a slave timer.
+         --
+         --  XXX PWM might be used to move start of ADC a bit after start of
+         --  PWM cycle of motor control.
+         Value.TI1S  := False;
+         --  0: The tim_ti1_in[15:0] multiplexer output is connected to tim_ti1
+         --  input
+         Value.OIS1  := False;
+         --  <> 0: tim_oc1=0 after a dead-time when MOE=0
+         Value.OIS1N := False;
+         --  <> 0: tim_oc1n=0 after a dead-time when MOE=0
+         Value.OIS2  := False;
+         --  <> 0: tim_oc2=0 when MOE=0
+
+         TIM.CR2 := Value;
+      end;
+
+      --  TIM15 slave mode control register (TIM15_SMCR)
+
+      --  declare
+      --     Aux : A0B.STM32G474.SVD.TIM.SMCR_Register_1 := TIM.SMCR;
+      --
+      --  begin
+      --     Value.SMS    := 2#110#;
+      --     Value.SMS_3  := 2#0#;
+      --     --  0110: Trigger Mode - The counter starts at a rising edge of the
+      --     --  trigger tim_trgi (but it is not reset). Only the start of the
+      --     --  counter is controlled.
+      --     Value.TS     := 2#010#;
+      --     Value.TS_4_3 := 2#00#;
+      --     --  00010: Internal Trigger 2 (tim_itr2) connected to tim3_trgo
+      --     Value.MSM    := False;  --  0: No action
+      --     --  Value.SMSPE - undefined in SVD
+      --
+      --     TIM.SMCR := Aux;
+      --  end;
+
+      --  TIM15 DMA/interrupt enable register (TIM15_DIER)
+      --  TIM15 status register (TIM15_SR)
+      --  TIM15 event generation register (TIM15_EGR)
+      --  TIM15 capture/compare mode register 1 (TIM15_CCMR1)
+      --  TIM15 capture/compare enable register (TIM15_CCER)
+
+      --  TIM15 counter (TIM15_CNT)
+
+      TIM.CNT.CNT := 0;
+
+      --  TIM15 prescaler (TIM15_PSC)
+
+      TIM.PSC.PSC := 3;  --  4, same as used by ADC
+
+      --  TIM15 auto-reload register (TIM15_ARR)
+
+      TIM.ARR.ARR := 125;
+
+      --  TIM15 repetition counter register (TIM15_RCR)
+      --  TIM15 capture/compare register 1 (TIM15_CCR1)
+      --  TIM15 capture/compare register 2 (TIM15_CCR2)
+      --  TIM15 break and dead-time register (TIM15_BDTR)
+      --  TIM15 timer deadtime register 2 (TIM15_DTR2)
+      --  TIM15 input selection register (TIM15_TISEL)
+      --  TIM15 alternate function register 1 (TIM15_AF1)
+      --  TIM15 alternate function register 2 (TIM15_AF2)
+      --  TIM15 DMA control register (TIM15_DCR)
+      --  TIM15 DMA address for full transfer (TIM15_DMAR)
+
+   --     --  Configure DIER - Not used
+   --
+   --     --  XXX Reset SR by write 0?
+   --
+   --     --  Set EGR - Not used
+   --
+   --     --  Configure CCMR1 only for CH1
+   --
+   --     declare
+   --        Aux : CCMR1_Output_Register := TIM.CCMR1_Output;
+   --
+   --     begin
+   --        Aux.CC1S  := 2#00#;  --  00: CC1 channel is configured as output.
+   --        Aux.OC1FE := False;
+   --        --  0: CC1 behaves normally depending on counter and CCR1 values even
+   --        --  when the trigger is ON. The minimum delay to activate CC1 output
+   --        --  when an edge occurs on the trigger input is 5 clock cycles.
+   --        Aux.OC1PE := True;
+   --        --  1: Preload register on TIMx_CCR1 enabled. Read/Write operations
+   --        --  access the preload register. TIMx_CCR1 preload value is loaded
+   --        --  in the active register at each update event.
+   --        Aux.OC1M  := 2#110#;
+   --        --  110: PWM mode 1 - In upcounting, channel 1 is active as long as
+   --        --  TIMx_CNT<TIMx_CCR1 else inactive. In downcounting, channel 1 is
+   --        --  inactive (OC1REF=‘0) as long as TIMx_CNT>TIMx_CCR1 else active
+   --        --  (OC1REF=1).
+   --        Aux.OC1CE := False;  --  0: OC1Ref is not affected by the ETRF input
+   --
+   --        TIM.CCMR1_Output := Aux;
+   --     end;
+   --
+   --     --  Configure CCMR2 - Not used
+   --
+   --     --  Configure CCER, only CH1
+   --
+   --     declare
+   --        Aux : CCER_Register_1 := TIM.CCER;
+   --
+   --     begin
+   --        Aux.CC1E  := True;
+   --        --  1: On - OC1 signal is output on the corresponding output pin
+   --        Aux.CC1P  := False;  --  0: OC1 active high
+   --        Aux.CC1NP := False;
+   --        --  CC1 channel configured as output: CC1NP must be kept cleared in
+   --        --  this case.
+   --
+   --        TIM.CCER := Aux;
+   --     end;
+   --
+   --     --  Set CNT to zero
+   --
+   --     TIM.CNT := (CNT_L => 0, CNT_H => 0);
+   --
+   --     --  Set PSC
+   --
+   --     TIM.PSC.PSC := Prescale;
+   --
+   --     --  Set ARR
+   --
+   --     TIM.ARR := (ARR_L => ADC_Cycle - 1, ARR_H => 0);
+   --
+   --     --  Set CCR1/CCR2/CCR3/CCR4 later
+   --
+   --     TIM.CCR1 := (CCR1_L => ADC_Cycle / 2, CCR1_H => 0);
+   --
+   --     --  Configure DCR - Not used
+   --
+   --     --  Configure DMAR - Not used
+   --
+   --     --  Force update event to load configured values of ARR/PSC to shadow
+   --     --  registers.
+   --
+   --     TIM.EGR.UG := True;
+
+      TIM.CR1.CEN := True;
+   end Initialize_TIM15;
 
    --------------------
    -- USART1_Handler --

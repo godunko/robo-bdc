@@ -16,15 +16,18 @@ with Control;
 package body Sensors is
 
    type Sensors_Data is record
-      Vref        : A0B.Types.Unsigned_16;
-      M1_Current  : A0B.Types.Unsigned_16;
-      M1_Position : A0B.Types.Unsigned_16;
-      M2_Current  : A0B.Types.Unsigned_16;
-      M2_Position : A0B.Types.Unsigned_16;
-      M3_Current  : A0B.Types.Unsigned_16;
-      M3_Position : A0B.Types.Unsigned_16;
-      M4_Current  : A0B.Types.Unsigned_16;
-      M4_Position : A0B.Types.Unsigned_16;
+      Vref            : A0B.Types.Unsigned_16;
+      Vref_Bad        : A0B.Types.Unsigned_16;
+      M1_Current      : A0B.Types.Unsigned_16;
+      M1_Current_Bad  : A0B.Types.Unsigned_16;
+      M1_Position     : A0B.Types.Unsigned_16;
+      M1_Position_Bad : A0B.Types.Unsigned_16;
+      --  M2_Current  : A0B.Types.Unsigned_16;
+      --  M2_Position : A0B.Types.Unsigned_16;
+      --  M3_Current  : A0B.Types.Unsigned_16;
+      --  M3_Position : A0B.Types.Unsigned_16;
+      --  M4_Current  : A0B.Types.Unsigned_16;
+      --  M4_Position : A0B.Types.Unsigned_16;
    end record;
 
    type Buffer_Array is array (Positive range <>) of Sensors_Data;
@@ -135,7 +138,8 @@ package body Sensors is
    begin
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
         (Memory_Address  => Buffer'Address,
-         Number_Of_Items => Buffer'Length * 9);
+         Number_Of_Items => Buffer'Length * 3);
+         --  Number_Of_Items => Buffer'Length * 9);
 
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
         (On_Conversion_Done_Callbacks.Create_Callback);
@@ -153,8 +157,8 @@ package body Sensors is
 
       Configuration.ADC1_DMA_CH.DMA_CH.Enable;
 
-      A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
-        (ADSTART => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+      --  A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+      --    (ADSTART => True, ADVREGEN => True, DEEPPWD => False, others => <>);
 
    end Initialize;
 

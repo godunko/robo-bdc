@@ -100,6 +100,9 @@ begin
          --        end;
          --     end;
 
+         when 'v' | 'V' =>
+            Console.Put_Line ("Measure");
+
          when others =>
             Console.Put_Line ("unknown command");
       end case;
