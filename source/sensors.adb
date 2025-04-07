@@ -7,39 +7,45 @@
 pragma Ada_2022;
 
 with A0B.Callbacks.Generic_Parameterless;
-with A0B.STM32G474.SVD.ADC;
+--  with A0B.STM32G474.SVD.ADC;
 
 with Configuration;
 with Console;
-with Control;
+--  with Control;
 
 package body Sensors is
 
-   type Sensors_Data is record
+   type ADC1_Sensors_Data is record
       Vref            : A0B.Types.Unsigned_16;
       Vref_Bad        : A0B.Types.Unsigned_16;
-      M1_Current      : A0B.Types.Unsigned_16;
-      M1_Current_Bad  : A0B.Types.Unsigned_16;
       M1_Position     : A0B.Types.Unsigned_16;
       M1_Position_Bad : A0B.Types.Unsigned_16;
-      --  M2_Current  : A0B.Types.Unsigned_16;
-      --  M2_Position : A0B.Types.Unsigned_16;
-      --  M3_Current  : A0B.Types.Unsigned_16;
-      --  M3_Position : A0B.Types.Unsigned_16;
-      --  M4_Current  : A0B.Types.Unsigned_16;
-      --  M4_Position : A0B.Types.Unsigned_16;
+      M1_Current      : A0B.Types.Unsigned_16;
+      M1_Current_Bad  : A0B.Types.Unsigned_16;
    end record;
 
-   type Buffer_Array is array (Positive range <>) of Sensors_Data;
+   type ADC2_Sensors_Data is record
+      M2_Current  : A0B.Types.Unsigned_16;
+      M2_Position : A0B.Types.Unsigned_16;
+      M3_Current  : A0B.Types.Unsigned_16;
+      M3_Position : A0B.Types.Unsigned_16;
+      M4_Current  : A0B.Types.Unsigned_16;
+      M4_Position : A0B.Types.Unsigned_16;
+   end record;
 
-   Buffer : Buffer_Array (1 .. 120) with Export;
-   --  Buffer to receive data with DNA.
+   type Buffer_1_Array is array (Positive range <>) of ADC1_Sensors_Data;
 
-   Data   : Buffer_Array (1 .. 2_400) with Export;
+   type Buffer_2_Array is array (Positive range <>) of ADC2_Sensors_Data;
+
+   Buffer_1 : Buffer_1_Array (1 .. 120) with Export;
+   Buffer_2 : Buffer_2_Array (1 .. 120) with Export;
+   --  Buffers to receive data with DNA.
+
+   --  Data   : Buffer_Array (1 .. 2_400) with Export;
    Last   : Natural := 0;
    --  Buffer to accumulate data.
 
-   Current : Sensors_Data;
+   --  Current : Sensors_Data;
    Average_Position : A0B.Types.Unsigned_16;
 
    procedure On_Conversion_Done;
@@ -90,30 +96,30 @@ package body Sensors is
       Console.New_Line;
       Console.Put_Line ("M1 current");
 
-      for J in Data'Range loop
-         if (J - 1) mod 30 = 0 then
-            Console.New_Line;
-         elsif (J - 1) mod 6 = 0 then
-            Console.Put ("  ");
-         end if;
-
-         Put (Data (J).M1_Current);
-      end loop;
+      --  for J in Data'Range loop
+      --     if (J - 1) mod 30 = 0 then
+      --        Console.New_Line;
+      --     elsif (J - 1) mod 6 = 0 then
+      --        Console.Put ("  ");
+      --     end if;
+      --
+      --     Put (Data (J).M1_Current);
+      --  end loop;
 
       Console.New_Line;
 
       Console.New_Line;
       Console.Put_Line ("M1 position");
 
-      for J in Data'Range loop
-         if (J - 1) mod 30 = 0 then
-            Console.New_Line;
-         elsif (J - 1) mod 6 = 0 then
-            Console.Put ("  ");
-         end if;
-
-         Put (Data (J).M1_Position);
-      end loop;
+      --  for J in Data'Range loop
+      --     if (J - 1) mod 30 = 0 then
+      --        Console.New_Line;
+      --     elsif (J - 1) mod 6 = 0 then
+      --        Console.Put ("  ");
+      --     end if;
+      --
+      --     Put (Data (J).M1_Position);
+      --  end loop;
 
       Console.New_Line;
    end Dump;
@@ -136,14 +142,24 @@ package body Sensors is
       use type A0B.Types.Unsigned_16;
 
    begin
-      Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
-        (Memory_Address  => Buffer'Address,
-         Number_Of_Items => Buffer'Length * 3);
-         --  Number_Of_Items => Buffer'Length * 9);
-
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
         (On_Conversion_Done_Callbacks.Create_Callback);
+      Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
+        (Memory_Address  => Buffer_1'Address,
+         Number_Of_Items => Buffer_1'Length * 3);
+         --  Number_Of_Items => Buffer'Length * 9);
+
+      Configuration.ADC2_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
+        (On_Conversion_Done_Callbacks.Create_Callback);
+      Configuration.ADC2_DMA_CH.DMA_CH.Set_Memory
+        (Memory_Address  => Buffer_2'Address,
+         Number_Of_Items => Buffer_2'Length * 3);
+         --  Number_Of_Items => Buffer'Length * 9);
+
       null;
+
+      Configuration.ADC1_DMA_CH.DMA_CH.Enable;
+      Configuration.ADC2_DMA_CH.DMA_CH.Enable;
 
       --  Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
       --    (Memory    => Buffer'Address,
@@ -154,12 +170,6 @@ package body Sensors is
       --    (On_Conversion_Done_Callbacks.Create_Callback);
       --  Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
       --  Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
-
-      Configuration.ADC1_DMA_CH.DMA_CH.Enable;
-
-      --  A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
-      --    (ADSTART => True, ADVREGEN => True, DEEPPWD => False, others => <>);
-
    end Initialize;
 
    ------------------------
