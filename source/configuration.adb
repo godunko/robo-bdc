@@ -448,8 +448,9 @@ is
       Start_ADC1_Operations;
       Enable_ADC1;
 
-      --  A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
-      --    (ADEN => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+      A0B.STM32G474.SVD.ADC.ADC1_Periph.CR :=
+        (ADSTART => True, ADVREGEN => True, DEEPPWD => False, others => <>);
+      --  Start ADC. Conversions will be started on signal from the timer.
 
    --     A0B.STM32F401.SVD.RCC.RCC_Periph.APB2ENR.ADC1EN := True;
    --
