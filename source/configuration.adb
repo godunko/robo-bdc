@@ -8,6 +8,7 @@ with A0B.ARMv7M.NVIC_Utilities;
 with A0B.ARMv7M.SysTick_Clock_Timer;
 with A0B.STM32G474.Interrupts;
 with A0B.STM32G474.SVD.ADC;
+with A0B.STM32G474.SVD.OPAMP;
 with A0B.STM32G474.SVD.RCC;
 with A0B.STM32G474.SVD.TIM;
 --  with A0B.STM32F401.TIM_Lines;
@@ -24,7 +25,7 @@ is
    ADC12_IN2   : constant := 2;
    --  ADC1_IN3    : constant := 3;
    --  ADC2_IN3    : constant := 3;
-   ADC1_IN4    : constant := 4;
+   --  ADC1_IN4    : constant := 4;
    ADC2_IN4    : constant := 4;
    --  ADC1_IN5    : constant := 5;
    --  ADC2_IN5    : constant := 5;
@@ -38,7 +39,7 @@ is
    --  ADC2_IN11   : constant := 11;
    ADC1_IN12   : constant := 12;
    --  ADC2_IN12   : constant := 12;
-   --  ADC1_OPAMP1  : constant := 13;
+   ADC1_OPAMP1  : constant := 13;
    --  ADC2_IN13   : constant := 13;
    --  ADC12_IN14  : constant := 14;
    ADC1_IN15   : constant := 15;
@@ -61,6 +62,8 @@ is
    --  --  1/1/560: 6x ADC samples per PWM cycle
 
    procedure Initialize_GPIO;
+
+   procedure Initialize_OPAMP;
 
    procedure Initialize_DMA;
 
@@ -105,6 +108,7 @@ is
          Clock_Frequency     => CPU_Frequency);
 
       Initialize_GPIO;
+      Initialize_OPAMP;
       Initialize_DMA;
       Initialize_Console_UART;
       Initialize_ADC;
@@ -366,10 +370,10 @@ is
             Value : A0B.STM32G474.SVD.ADC.SQR2_Register := ADC.SQR2;
 
          begin
-            Value.SQ5 := ADC1_IN4;
-            Value.SQ6 := ADC1_IN4;
-            --  Value.SQ5 := ADC1_OPAMP1;
-            --  Value.SQ6 := ADC1_OPAMP1;
+            --  Value.SQ5 := ADC1_IN4;
+            --  Value.SQ6 := ADC1_IN4;
+            Value.SQ5 := ADC1_OPAMP1;
+            Value.SQ6 := ADC1_OPAMP1;
 
             ADC.SQR2 := Value;
          end;
@@ -1409,6 +1413,127 @@ is
       --
       --  UART1.USART1_Asynchronous.Configure (Configuration);
    end Initialize_Console_UART;
+
+   ----------------------
+   -- Initialize_OPAMP --
+   ----------------------
+
+   procedure Initialize_OPAMP is
+      OPAMP : A0B.STM32G474.SVD.OPAMP.OPAMP_Peripheral
+        renames A0B.STM32G474.SVD.OPAMP.OPAMP_Periph;
+
+   begin
+      A0B.STM32G474.SVD.RCC.RCC_Periph.RCC_APB2ENR.SYSCFGEN :=
+        A0B.STM32G474.SVD.RCC.B_0x1;
+
+      --  OPAMP1 control/status register (OPAMP1_CSR)
+
+      declare
+         Value : A0B.STM32G474.SVD.OPAMP.OPAMP1_CSR_Register :=
+           OPAMP.OPAMP1_CSR;
+
+      begin
+         Value.OPAEN     := False;  --  0: Operational amplifier disabled
+         Value.FORCE_VP  := False;
+         --  0: Normal operating mode. Non-inverting input connected to inputs.
+         Value.VP_SEL    := 2#01#;
+         --  01: VINP1 pin connected to OPAMP1 VINP input (PA3)
+         Value.USERTRIM  := False;  --  0: ‘factory’ trim code used
+         Value.VM_SEL    := 2#10#;
+         --  10: Feedback resistor is connected to OPAMP VINM input (PGA mode),
+         --  Inverting input selection is depends on the PGA_GAIN setting
+         Value.OPAHSM    := True;
+         --  1: Operational amplifier in high-speed mode
+         Value.OPAINTOEN := True;
+         --  1: The OPAMP output is connected internally to an ADC channel and
+         --  disconnected from the output pin
+         Value.CALON     := False;
+         --  0: Normal mode
+         Value.CALSEL    := 2#00#;  --  <>
+         Value.PGA_GAIN  := 2#00001#;
+         --  00001: Non inverting internal gain = 4
+         --  Value.TRIMOFFSETP := <>  Factory value
+         --  Value.TRIMOFFSETN := <>  Factory value
+         --  Value.CALOUT             Read only
+         Value.LOCK      := False;  --  0: OPAMP1_CSR is read-write
+
+         OPAMP.OPAMP1_CSR := Value;
+      end;
+
+      --  OPAMP2 control/status register (OPAMP2_CSR)
+
+      declare
+         Value : A0B.STM32G474.SVD.OPAMP.OPAMP2_CSR_Register :=
+           OPAMP.OPAMP2_CSR;
+
+      begin
+         Value.OPAEN     := False;  --  0: Operational amplifier disabled
+         Value.FORCE_VP  := False;
+         --  0: Normal operating mode. Non-inverting input connected to inputs.
+         Value.VP_SEL    := 2#00#;
+         --  00: VINP0 pin connected to OPAMP2 VINP input (PA7)
+         Value.USERTRIM  := False;  --  0: ‘factory’ trim code used
+         Value.VM_SEL    := 2#10#;
+         --  10: Feedback resistor is connected to OPAMP VINM input (PGA mode),
+         --  Inverting input selection is depends on the PGA_GAIN setting
+         Value.OPAHSM    := True;
+         --  1: Operational amplifier in high-speed mode
+         Value.OPAINTOEN := True;
+         --  1: The OPAMP output is connected internally to an ADC channel and
+         --  disconnected from the output pin
+         Value.CALON     := False;
+         --  0: Normal mode
+         Value.CALSEL    := 2#00#;  --  <>
+         Value.PGA_GAIN  := 2#00001#;
+         --  00001: Non inverting internal gain = 4
+         --  Value.TRIMOFFSETP := <>  Factory value
+         --  Value.TRIMOFFSETN := <>  Factory value
+         --  Value.CALOUT             Read only
+         Value.LOCK      := False;  --  0: OPAMP1_CSR is read-write
+
+         OPAMP.OPAMP2_CSR := Value;
+      end;
+
+      --  OPAMP3 control/status register (OPAMP3_CSR)
+
+      declare
+         Value : A0B.STM32G474.SVD.OPAMP.OPAMP3_CSR_Register :=
+           OPAMP.OPAMP3_CSR;
+
+      begin
+         Value.OPAEN     := False;  --  0: Operational amplifier disabled
+         Value.FORCE_VP  := False;
+         --  0: Normal operating mode. Non-inverting input connected to inputs.
+         Value.VP_SEL    := 2#00#;
+         --  10: VINP2 pin connected to OPAMP3 VINP input (PA3)
+         Value.USERTRIM  := False;  --  0: ‘factory’ trim code used
+         Value.VM_SEL    := 2#10#;
+         --  10: Feedback resistor is connected to OPAMP VINM input (PGA mode),
+         --  Inverting input selection is depends on the PGA_GAIN setting
+         Value.OPAHSM    := True;
+         --  1: Operational amplifier in high-speed mode
+         Value.OPAINTOEN := True;
+         --  1: The OPAMP output is connected internally to an ADC channel and
+         --  disconnected from the output pin
+         Value.CALON     := False;
+         --  0: Normal mode
+         Value.CALSEL    := 2#00#;  --  <>
+         Value.PGA_GAIN  := 2#00001#;
+         --  00001: Non inverting internal gain = 4
+         --  Value.TRIMOFFSETP := <>  Factory value
+         --  Value.TRIMOFFSETN := <>  Factory value
+         --  Value.CALOUT             Read only
+         Value.LOCK      := False;  --  0: OPAMP1_CSR is read-write
+
+         OPAMP.OPAMP3_CSR := Value;
+      end;
+
+      --  Enable OPAMPs
+
+      OPAMP.OPAMP1_CSR.OPAEN := True;
+      OPAMP.OPAMP2_CSR.OPAEN := True;
+      OPAMP.OPAMP3_CSR.OPAEN := True;
+   end Initialize_OPAMP;
 
    ----------------------
    -- Initialize_TIM15 --
