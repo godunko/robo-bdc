@@ -133,11 +133,34 @@ is
         (ADC : in out A0B.STM32G474.SVD.ADC.ADC1_Peripheral);
       --  Left Deep-power-down mode and activate voltage regulator
 
+      procedure Calibrate_Single_Ended
+        (ADC : in out A0B.STM32G474.SVD.ADC.ADC1_Peripheral);
+      --  Perform ADC calibration procedure.
+
       procedure Enable_ADC
         (ADC : in out A0B.STM32G474.SVD.ADC.ADC1_Peripheral);
 
       procedure Start_ADC (ADC : in out A0B.STM32G474.SVD.ADC.ADC1_Peripheral);
       --  Starts ADC conversions.
+
+      ----------------------------
+      -- Calibrate_Single_Ended --
+      ----------------------------
+
+      procedure Calibrate_Single_Ended
+        (ADC : in out A0B.STM32G474.SVD.ADC.ADC1_Peripheral) is
+      begin
+         ADC.CR :=
+           (ADCALDIF => False,
+            ADCAL    => True,
+            DEEPPWD  => False,
+            ADVREGEN => True,
+            others => <>);
+
+         while ADC.CR.ADCAL loop
+            null;
+         end loop;
+      end Calibrate_Single_Ended;
 
       ----------------
       -- Enable_ADC --
@@ -652,11 +675,13 @@ is
       Initialize_ADC12_Common;
 
       Start_ADC_Operations (A0B.STM32G474.SVD.ADC.ADC1_Periph);
+      Calibrate_Single_Ended (A0B.STM32G474.SVD.ADC.ADC1_Periph);
       Enable_ADC (A0B.STM32G474.SVD.ADC.ADC1_Periph);
       Start_ADC (A0B.STM32G474.SVD.ADC.ADC1_Periph);
       --  Start ADC. Conversions will be started on signal from the timer.
 
       Start_ADC_Operations (A0B.STM32G474.SVD.ADC.ADC2_Periph);
+      Calibrate_Single_Ended (A0B.STM32G474.SVD.ADC.ADC2_Periph);
       Enable_ADC (A0B.STM32G474.SVD.ADC.ADC2_Periph);
       Start_ADC (A0B.STM32G474.SVD.ADC.ADC2_Periph);
       --  Start ADC. Conversions will be started on signal from the timer.
