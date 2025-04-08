@@ -10,9 +10,6 @@ with A0B.STM32G474.Interrupts;
 with A0B.STM32G474.SVD.ADC;
 with A0B.STM32G474.SVD.RCC;
 with A0B.STM32G474.SVD.TIM;
---  with A0B.STM32F401.SVD.ADC;
---  with A0B.STM32F401.SVD.RCC;
---  with A0B.STM32F401.SVD.TIM;
 --  with A0B.STM32F401.TIM_Lines;
 --  with A0B.STM32F401.USART.Configuration_Utilities;
 --  with A0B.Types;
@@ -23,35 +20,35 @@ is
 
    CPU_Frequency : constant := 150_000_000;
 
-   ADC12_INP1   : constant := 1;
-   ADC12_INP2   : constant := 2;
-   ADC1_INP3    : constant := 3;
-   ADC2_INP3    : constant := 3;
-   ADC1_INP4    : constant := 4;
-   ADC2_INP4    : constant := 4;
-   ADC1_INP5    : constant := 5;
-   ADC2_INP5    : constant := 5;
-   ADC12_INP6   : constant := 6;
-   ADC12_INP7   : constant := 7;
-   ADC12_INP8   : constant := 8;
-   ADC12_INP9   : constant := 9;
-   ADC1_INP10   : constant := 10;
-   ADC2_INP10   : constant := 10;
-   ADC1_INP11   : constant := 11;
-   ADC2_INP11   : constant := 11;
-   ADC1_INP12   : constant := 12;
-   ADC2_INP12   : constant := 12;
-   ADC1_OPAMP1  : constant := 13;
-   ADC2_INP13   : constant := 13;
-   ADC12_INP14  : constant := 14;
-   ADC1_INP15   : constant := 15;
-   ADC2_INP15   : constant := 15;
-   ADC1_VTS     : constant := 16;
-   ADC2_OPAMP2  : constant := 16;
-   ADC1_VBAT_3  : constant := 17;
-   ADC2_INP17   : constant := 17;
-   ADC1_VREFINT : constant := 18;
-   ADC2_OPAMP3  : constant := 18;
+   --  ADC12_IN1   : constant := 1;
+   ADC12_IN2   : constant := 2;
+   --  ADC1_IN3    : constant := 3;
+   --  ADC2_IN3    : constant := 3;
+   ADC1_IN4    : constant := 4;
+   ADC2_IN4    : constant := 4;
+   --  ADC1_IN5    : constant := 5;
+   --  ADC2_IN5    : constant := 5;
+   --  ADC12_IN6   : constant := 6;
+   --  ADC12_IN7   : constant := 7;
+   --  ADC12_IN8   : constant := 8;
+   --  ADC12_IN9   : constant := 9;
+   --  ADC1_IN10   : constant := 10;
+   --  ADC2_IN10   : constant := 10;
+   --  ADC1_IN11   : constant := 11;
+   --  ADC2_IN11   : constant := 11;
+   ADC1_IN12   : constant := 12;
+   --  ADC2_IN12   : constant := 12;
+   --  ADC1_OPAMP1  : constant := 13;
+   --  ADC2_IN13   : constant := 13;
+   --  ADC12_IN14  : constant := 14;
+   ADC1_IN15   : constant := 15;
+   --  ADC2_IN15   : constant := 15;
+   --  ADC1_VTS     : constant := 16;
+   --  ADC2_OPAMP2  : constant := 16;
+   --  ADC1_VBAT_3  : constant := 17;
+   ADC2_IN17   : constant := 17;
+   --  ADC1_VREFINT : constant := 18;
+   --  ADC2_OPAMP3  : constant := 18;
 
    procedure USART1_Handler
      with Export, Convention => C, External_Name => "USART1_Handler";
@@ -331,12 +328,11 @@ is
             Value : A0B.STM32G474.SVD.ADC.SQR1_Register := ADC.SQR1;
 
          begin
-            --  Value.L   := 2#0010#;  --  3 conversions
             Value.L   := 5;  --  6 conversions
-            Value.SQ1 := ADC1_VREFINT;
-            Value.SQ2 := ADC1_VREFINT;
-            Value.SQ3 := ADC1_INP3;
-            Value.SQ4 := ADC1_INP3;
+            Value.SQ1 := ADC1_IN12;
+            Value.SQ2 := ADC1_IN12;
+            Value.SQ3 := ADC1_IN15;
+            Value.SQ4 := ADC1_IN15;
 
             ADC.SQR1 := Value;
          end;
@@ -347,8 +343,8 @@ is
             Value : A0B.STM32G474.SVD.ADC.SQR2_Register := ADC.SQR2;
 
          begin
-            Value.SQ5 := ADC12_INP2;
-            Value.SQ6 := ADC12_INP2;
+            Value.SQ5 := ADC1_IN4;
+            Value.SQ6 := ADC1_IN4;
             --  Value.SQ5 := ADC1_OPAMP1;
             --  Value.SQ6 := ADC1_OPAMP1;
 
@@ -528,12 +524,12 @@ is
          begin
             --  Value.L   := 2#0010#;  --  3 conversions
             Value.L   := 5;  --  6 conversions
-            Value.SQ1 := ADC1_VREFINT;
-            Value.SQ2 := ADC1_VREFINT;
-            Value.SQ3 := ADC12_INP1;
-            Value.SQ4 := ADC12_INP1;
-            --  Value.SQ3 := ADC1_OPAMP1;
-            --  Value.SQ4 := ADC1_OPAMP1;
+            Value.SQ1 := ADC2_IN17;
+            Value.SQ2 := ADC2_IN17;
+            Value.SQ3 := ADC2_IN4;
+            Value.SQ4 := ADC2_IN4;
+            --  Value.SQ3 := ADC2_OPAMP2;
+            --  Value.SQ4 := ADC2_OPAMP2;
 
             ADC.SQR1 := Value;
          end;
@@ -544,8 +540,10 @@ is
             Value : A0B.STM32G474.SVD.ADC.SQR2_Register := ADC.SQR2;
 
          begin
-            Value.SQ5 := ADC12_INP2;
-            Value.SQ6 := ADC12_INP2;
+            Value.SQ5 := ADC12_IN2;
+            Value.SQ6 := ADC12_IN2;
+            --  Value.SQ5 := ADC2_OPAMP3;
+            --  Value.SQ6 := ADC2_OPAMP3;
 
             ADC.SQR2 := Value;
          end;
@@ -601,7 +599,7 @@ is
             Value.CKMODE    := 2#11#;
             --  11: adc_hclk/4 (Synchronous clock mode)
             Value.PRESC     := 2#00000#;  --  0000: input ADC clock not divided
-            Value.VREFEN    := True;      --  1: VREFINT channel enabled
+            Value.VREFEN    := False;     --  0: VREFINT channel disabled
             Value.VSENSESEL := False;
             --  0: Temperature sensor channel disabled
             Value.VBATSEL   := False;
@@ -695,18 +693,15 @@ is
 
    procedure Initialize_GPIO is
    begin
-      null;
-      --  ADC1 input
+      --  ADC1/ADC2 input
 
       M1_P_Pin.Initialize_Analog;
       M1_C_Pin.Initialize_Analog;
-      --  M2_C_Pin.Configure_Analog;
-      --  M2_P_Pin.Configure_Analog;
-      --  M3_C_Pin.Configure_Analog;
-      --  M3_P_Pin.Configure_Analog;
-   --     M4_C_Pin.Configure_Analog;
-   --     M4_P_Pin.Configure_Analog;
-   --
+      M2_P_Pin.Initialize_Analog;
+      M2_C_Pin.Initialize_Analog;
+      M3_P_Pin.Initialize_Analog;
+      M3_C_Pin.Initialize_Analog;
+
    --     --  TIM3 output
    --
    --     M1_IN1_Pin.Configure_Alternative_Function
@@ -1395,7 +1390,7 @@ is
    ----------------------
 
    procedure Initialize_TIM15 is
-      TIM :A0B.STM32G474.SVD.TIM.TIM15_Peripheral
+      TIM : A0B.STM32G474.SVD.TIM.TIM15_Peripheral
         renames A0B.STM32G474.SVD.TIM.TIM15_Periph;
 
    begin

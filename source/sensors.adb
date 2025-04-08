@@ -16,21 +16,21 @@ with Console;
 package body Sensors is
 
    type ADC1_Sensors_Data is record
-      Vref            : A0B.Types.Unsigned_16;
-      Vref_Bad        : A0B.Types.Unsigned_16;
       M1_Position     : A0B.Types.Unsigned_16;
       M1_Position_Bad : A0B.Types.Unsigned_16;
+      M2_Position     : A0B.Types.Unsigned_16;
+      M2_Position_Bad : A0B.Types.Unsigned_16;
       M1_Current      : A0B.Types.Unsigned_16;
       M1_Current_Bad  : A0B.Types.Unsigned_16;
    end record;
 
    type ADC2_Sensors_Data is record
-      M2_Current  : A0B.Types.Unsigned_16;
-      M2_Position : A0B.Types.Unsigned_16;
-      M3_Current  : A0B.Types.Unsigned_16;
-      M3_Position : A0B.Types.Unsigned_16;
-      M4_Current  : A0B.Types.Unsigned_16;
-      M4_Position : A0B.Types.Unsigned_16;
+      M3_Position     : A0B.Types.Unsigned_16;
+      M3_Position_Bad : A0B.Types.Unsigned_16;
+      M2_Current      : A0B.Types.Unsigned_16;
+      M2_Current_Bad  : A0B.Types.Unsigned_16;
+      M3_Current      : A0B.Types.Unsigned_16;
+      M3_Current_Bad  : A0B.Types.Unsigned_16;
    end record;
 
    type Buffer_1_Array is array (Positive range <>) of ADC1_Sensors_Data;
@@ -182,6 +182,7 @@ package body Sensors is
 
    begin
       Configuration.ADC1_DMA_CH.DMA_CH.Disable;
+      Configuration.ADC2_DMA_CH.DMA_CH.Disable;
 
       raise Program_Error;
       --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
