@@ -33,6 +33,9 @@ package body Sensors is
       M3_Current_Bad  : A0B.Types.Unsigned_16;
    end record;
 
+   ADC1_Channels : constant := 6;
+   ADC2_Channels : constant := 6;
+
    type Buffer_1_Array is array (Positive range <>) of ADC1_Sensors_Data;
 
    type Buffer_2_Array is array (Positive range <>) of ADC2_Sensors_Data;
@@ -146,15 +149,13 @@ package body Sensors is
         (On_Conversion_Done_Callbacks.Create_Callback);
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
         (Memory_Address  => Buffer_1'Address,
-         Number_Of_Items => Buffer_1'Length * 3);
-         --  Number_Of_Items => Buffer'Length * 9);
+         Number_Of_Items => Buffer_1'Length * ADC1_Channels);
 
       Configuration.ADC2_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
         (On_Conversion_Done_Callbacks.Create_Callback);
       Configuration.ADC2_DMA_CH.DMA_CH.Set_Memory
         (Memory_Address  => Buffer_2'Address,
-         Number_Of_Items => Buffer_2'Length * 3);
-         --  Number_Of_Items => Buffer'Length * 9);
+         Number_Of_Items => Buffer_2'Length * ADC2_Channels);
 
       null;
 
