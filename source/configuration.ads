@@ -53,23 +53,24 @@ is
 
    package My_F0_USART is
      new A0B.STM32_USART.Generic_F0_USARTs
-       (DMA_Data_Item      => A0B.STM32_DMA.DMA_Data_Item,
-        Byte               => A0B.STM32_DMA.Byte,
-        Word               => A0B.STM32_DMA.Word,
-        DMA_Priority_Level => A0B.STM32_DMA.Priority_Level,
-        Low                => A0B.STM32_DMA.Low,
-        DMA_Channel        => A0B.STM32_DMA.F1_Channels.Abstract_DMA_Channel,
-        Initialize         => A0B.STM32_DMA.F1_Channels.Initialize,
+       (DMA_Data_Item          => A0B.STM32_DMA.DMA_Data_Item,
+        Byte                   => A0B.STM32_DMA.Byte,
+        Word                   => A0B.STM32_DMA.Word,
+        DMA_Priority_Level     => A0B.STM32_DMA.Priority_Level,
+        Low                    => A0B.STM32_DMA.Low,
+        DMA_Channel            =>
+           A0B.STM32_DMA.F1_Channels.Abstract_DMA_Channel,
+        Initialize             => A0B.STM32_DMA.F1_Channels.Initialize,
         Configure_Peripheral_To_Memory =>
            A0B.STM32_DMA.F1_Channels.Configure_Peripheral_To_Memory,
         Configure_Memory_To_Peripheral =>
            A0B.STM32_DMA.F1_Channels.Configure_Memory_To_Peripheral,
-        Set_Memory         => A0B.STM32_DMA.F1_Channels.Set_Memory,
-        Set_Transfer_Completed_Callback =>
-           A0B.STM32_DMA.F1_Channels.Set_Transfer_Completed_Callback,
-        Enable             => A0B.STM32_DMA.F1_Channels.Enable,
-        Disable            => A0B.STM32_DMA.F1_Channels.Disable,
-        Is_Enabled         => A0B.STM32_DMA.F1_Channels.Is_Enabled,
+        Set_Memory             => A0B.STM32_DMA.F1_Channels.Set_Memory,
+        Set_Interrupt_Callback =>
+           A0B.STM32_DMA.F1_Channels.Set_Interrupt_Callback,
+        Enable                 => A0B.STM32_DMA.F1_Channels.Enable,
+        Disable                => A0B.STM32_DMA.F1_Channels.Disable,
+        Is_Enabled             => A0B.STM32_DMA.F1_Channels.Is_Enabled,
         Enable_Transfer_Completed_Interrupt =>
            A0B.STM32_DMA.F1_Channels.Enable_Transfer_Completed_Interrupt,
         Get_Masked_And_Clear_Transfer_Completed =>

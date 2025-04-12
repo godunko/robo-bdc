@@ -145,13 +145,13 @@ package body Sensors is
       use type A0B.Types.Unsigned_16;
 
    begin
-      Configuration.ADC1_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
+      Configuration.ADC1_DMA_CH.DMA_CH.Set_Interrupt_Callback
         (On_Conversion_Done_Callbacks.Create_Callback);
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
         (Memory_Address  => Buffer_1'Address,
          Number_Of_Items => Buffer_1'Length * ADC1_Channels);
 
-      Configuration.ADC2_DMA_CH.DMA_CH.Set_Transfer_Completed_Callback
+      Configuration.ADC2_DMA_CH.DMA_CH.Set_Interrupt_Callback
         (On_Conversion_Done_Callbacks.Create_Callback);
       Configuration.ADC2_DMA_CH.DMA_CH.Set_Memory
         (Memory_Address  => Buffer_2'Address,
