@@ -40,21 +40,36 @@ package body Sensors is
 
    type Buffer_2_Array is array (Positive range <>) of ADC2_Sensors_Data;
 
-   Buffer_1 : Buffer_1_Array (1 .. 120) with Export;
-   Buffer_2 : Buffer_2_Array (1 .. 120) with Export;
+   ADC1_Buffer : Buffer_1_Array (1 .. 120) with Export;
+   ADC2_Buffer : Buffer_2_Array (1 .. 120) with Export;
    --  Buffers to receive data with DNA.
 
-   --  Data   : Buffer_Array (1 .. 2_400) with Export;
-   Last   : Natural := 0;
+   type Sensors_Data is record
+      M1_Position : A0B.Types.Unsigned_16;
+      M1_Current  : A0B.Types.Unsigned_16;
+      M2_Position : A0B.Types.Unsigned_16;
+      M2_Current  : A0B.Types.Unsigned_16;
+      M3_Position : A0B.Types.Unsigned_16;
+      M3_Current  : A0B.Types.Unsigned_16;
+   end record;
+
+   Data      : array (1 .. 2_400) of Sensors_Data with Export;
+   ADC1_Last : Natural := 0;
+   ADC2_Last : Natural := 0;
    --  Buffer to accumulate data.
 
    --  Current : Sensors_Data;
    Average_Position : A0B.Types.Unsigned_16;
 
-   procedure On_Conversion_Done;
+   procedure On_ADC1_DMA;
 
-   package On_Conversion_Done_Callbacks is
-      new A0B.Callbacks.Generic_Parameterless (On_Conversion_Done);
+   procedure On_ADC2_DMA;
+
+   package On_ADC1_DMA_Callbacks is
+      new A0B.Callbacks.Generic_Parameterless (On_ADC1_DMA);
+
+   package On_ADC2_DMA_Callbacks is
+      new A0B.Callbacks.Generic_Parameterless (On_ADC2_DMA);
 
    ------------------
    -- Collect_Data --
@@ -62,7 +77,8 @@ package body Sensors is
 
    procedure Collect_Data is
    begin
-      Last := 0;
+      ADC1_Last := 0;
+      ADC2_Last := 0;
    end Collect_Data;
 
    ----------
@@ -145,74 +161,81 @@ package body Sensors is
       use type A0B.Types.Unsigned_16;
 
    begin
-      Configuration.ADC1_DMA_CH.DMA_CH.Set_Interrupt_Callback
-        (On_Conversion_Done_Callbacks.Create_Callback);
       Configuration.ADC1_DMA_CH.DMA_CH.Set_Memory
-        (Memory_Address  => Buffer_1'Address,
-         Number_Of_Items => Buffer_1'Length * ADC1_Channels);
-
-      Configuration.ADC2_DMA_CH.DMA_CH.Set_Interrupt_Callback
-        (On_Conversion_Done_Callbacks.Create_Callback);
-      Configuration.ADC2_DMA_CH.DMA_CH.Set_Memory
-        (Memory_Address  => Buffer_2'Address,
-         Number_Of_Items => Buffer_2'Length * ADC2_Channels);
-
-      null;
-
+        (Memory_Address  => ADC1_Buffer'Address,
+         Number_Of_Items => ADC1_Buffer'Length * ADC1_Channels);
+      Configuration.ADC1_DMA_CH.DMA_CH.Set_Interrupt_Callback
+        (On_ADC1_DMA_Callbacks.Create_Callback);
+      Configuration.ADC1_DMA_CH.DMA_CH.Enable_Transfer_Completed_Interrupt;
+      Configuration.ADC1_DMA_CH.DMA_CH.Enable_Half_Transfer_Interrupt;
       Configuration.ADC1_DMA_CH.DMA_CH.Enable;
-      Configuration.ADC2_DMA_CH.DMA_CH.Enable;
 
-      --  Configuration.ADC1_DMA_Stream.Set_Memory_Buffer
-      --    (Memory    => Buffer'Address,
-      --     Count     => Buffer'Length * 9,
-      --     Increment => True);
-      --  Configuration.ADC1_DMA_Stream.Enable;
-      --  Configuration.ADC1_DMA_Stream.Set_Interrupt_Callback
-      --    (On_Conversion_Done_Callbacks.Create_Callback);
-      --  Configuration.ADC1_DMA_Stream.Enable_Half_Transfer_Interrupt;
-      --  Configuration.ADC1_DMA_Stream.Enable_Transfer_Complete_Interrupt;
+      Configuration.ADC2_DMA_CH.DMA_CH.Set_Memory
+        (Memory_Address  => ADC2_Buffer'Address,
+         Number_Of_Items => ADC2_Buffer'Length * ADC2_Channels);
+      Configuration.ADC2_DMA_CH.DMA_CH.Set_Interrupt_Callback
+        (On_ADC2_DMA_Callbacks.Create_Callback);
+      Configuration.ADC2_DMA_CH.DMA_CH.Enable_Transfer_Completed_Interrupt;
+      Configuration.ADC2_DMA_CH.DMA_CH.Enable_Half_Transfer_Interrupt;
+      Configuration.ADC2_DMA_CH.DMA_CH.Enable;
    end Initialize;
 
-   ------------------------
-   -- On_Conversion_Done --
-   ------------------------
+   -----------------
+   -- On_ADC1_DMA --
+   -----------------
 
-   procedure On_Conversion_Done is
-      --  F : Positive;
-      --  L : Positive;
-
+   procedure On_ADC1_DMA is
    begin
-      Configuration.ADC1_DMA_CH.DMA_CH.Disable;
-      Configuration.ADC2_DMA_CH.DMA_CH.Disable;
+      --  Configuration.ADC1_DMA_CH.DMA_CH.Disable;
 
-      raise Program_Error;
-      --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Half_Transfer then
-      --     if Last <= Data'Last - Buffer'Length / 2 then
+      if Configuration.ADC1_DMA_CH.DMA_CH.Get_Masked_And_Clear_Half_Transfer
+      then
+         if ADC1_Last <= Data'Last - ADC1_Buffer'Length / 2 then
       --        F := Buffer'First;
       --        L := Buffer'Length / 2;
-      --
-      --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
-      --          Buffer (Buffer'First .. Buffer'Length / 2);
-      --        Last := @ + Buffer'Length / 2;
-      --     end if;
-      --
-      --     Current := Buffer (Buffer'Length / 2);
-      --  end if;
-      --
-      --  if Configuration.ADC1_DMA_Stream.Get_Masked_And_Clear_Transfer_Completed
-      --  then
+
+            for J in ADC1_Buffer'First
+                       .. ADC1_Buffer'First + ADC1_Buffer'Length / 2 - 1
+            loop
+               ADC1_Last := @ + 1;
+               Data (ADC1_Last).M1_Current  := ADC1_Buffer (J).M1_Current;
+               Data (ADC1_Last).M1_Position := ADC1_Buffer (J).M1_Position;
+               Data (ADC1_Last).M2_Position := ADC1_Buffer (J).M2_Position;
+            end loop;
+
+         else
+            raise Program_Error;
+         end if;
+
+         --  Current := Buffer (Buffer'Length / 2);
+      end if;
+
+      if Configuration.ADC1_DMA_CH.DMA_CH
+           .Get_Masked_And_Clear_Transfer_Completed
+      then
+         if ADC1_Last <= Data'Last - ADC1_Buffer'Length / 2 then
       --     F := Buffer'First;
       --     L := Buffer'Length / 2;
-      --
-      --     if Last <= Data'Last - Buffer'Length / 2 then
+
+            for J in ADC1_Buffer'First + ADC1_Buffer'Length / 2
+                       .. ADC1_Buffer'Last
+            loop
+               ADC1_Last := @ + 1;
+               Data (ADC1_Last).M1_Current  := ADC1_Buffer (J).M1_Current;
+               Data (ADC1_Last).M1_Position := ADC1_Buffer (J).M1_Position;
+               Data (ADC1_Last).M2_Position := ADC1_Buffer (J).M2_Position;
+            end loop;
       --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
       --          Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
       --        Last := @ + Buffer'Length / 2;
-      --     end if;
+
+         else
+            raise Program_Error;
+         end if;
       --
       --     Current := Buffer (Buffer'Last);
-      --  end if;
-      --
+      end if;
+
       --  declare
       --     use type A0B.Types.Unsigned_32;
       --
@@ -229,6 +252,79 @@ package body Sensors is
       --
       --  Control.Iteration;
       null;
-   end On_Conversion_Done;
+   end On_ADC1_DMA;
+
+   -----------------
+   -- On_ADC2_DMA --
+   -----------------
+
+   procedure On_ADC2_DMA is
+   begin
+      if Configuration.ADC2_DMA_CH.DMA_CH.Get_Masked_And_Clear_Half_Transfer
+      then
+         if ADC2_Last <= Data'Last - ADC2_Buffer'Length / 2 then
+      --        F := Buffer'First;
+      --        L := Buffer'Length / 2;
+
+            for J in ADC2_Buffer'First
+                       .. ADC2_Buffer'First + ADC2_Buffer'Length / 2 - 1
+            loop
+               ADC2_Last := @ + 1;
+               Data (ADC2_Last).M2_Current  := ADC2_Buffer (J).M2_Current;
+               Data (ADC2_Last).M3_Current  := ADC2_Buffer (J).M3_Current;
+               Data (ADC2_Last).M3_Position := ADC2_Buffer (J).M3_Position;
+            end loop;
+      --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
+      --          Buffer (Buffer'First .. Buffer'Length / 2);
+      --        Last := @ + Buffer'Length / 2;
+
+         else
+            raise Program_Error;
+         end if;
+      --
+      --     Current := Buffer (Buffer'Length / 2);
+      end if;
+
+      if Configuration.ADC2_DMA_CH.DMA_CH
+           .Get_Masked_And_Clear_Transfer_Completed
+      then
+      --     F := Buffer'First;
+      --     L := Buffer'Length / 2;
+
+         if ADC2_Last <= Data'Last - ADC2_Buffer'Length / 2 then
+            for J in ADC2_Buffer'First + ADC2_Buffer'Length / 2
+                       .. ADC2_Buffer'Last
+            loop
+               ADC2_Last := @ + 1;
+               Data (ADC2_Last).M2_Current  := ADC2_Buffer (J).M2_Current;
+               Data (ADC2_Last).M3_Current  := ADC2_Buffer (J).M3_Current;
+               Data (ADC2_Last).M3_Position := ADC2_Buffer (J).M3_Position;
+            end loop;
+      --        Data (Last + 1 .. Last + Buffer'Length / 2) :=
+      --          Buffer (Buffer'First + Buffer'Length / 2 .. Buffer'Last);
+      --        Last := @ + Buffer'Length / 2;
+         else
+            raise Program_Error;
+         end if;
+
+      --     Current := Buffer (Buffer'Last);
+      end if;
+      --
+      --  declare
+      --     use type A0B.Types.Unsigned_32;
+      --
+      --     A : A0B.Types.Unsigned_32 := 0;
+      --
+      --  begin
+      --     for J in F .. L loop
+      --        A := @ + A0B.Types.Unsigned_32 (Buffer (J).M1_Position);
+      --     end loop;
+      --
+      --     Average_Position :=
+      --       A0B.Types.Unsigned_16 (A / A0B.Types.Unsigned_32 (L - F + 1));
+      --  end;
+      --
+      --  Control.Iteration;
+   end On_ADC2_DMA;
 
 end Sensors;
