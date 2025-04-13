@@ -872,7 +872,7 @@ is
 
       --  TIM15 auto-reload register (TIM15_ARR)
 
-      TIM.ARR.ARR := ADC_TIM_Cycles;
+      TIM.ARR.ARR := ADC_TIM_Cycles - 1;
 
       --  TIM15 repetition counter register (TIM15_RCR)
       --  TIM15 capture/compare register 1 (TIM15_CCR1)
@@ -1084,7 +1084,7 @@ is
 
       --  TIMx prescaler (TIMx_PSC)
 
-      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler;
+      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler - 1;
 
       --  TIMx auto-reload register (TIMx_ARR)
 
@@ -1312,7 +1312,7 @@ is
 
       --  TIMx prescaler (TIMx_PSC)
 
-      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler;
+      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler - 1;
 
       --  TIMx auto-reload register (TIMx_ARR)
 
@@ -1537,7 +1537,7 @@ is
 
       --  TIMx prescaler (TIMx_PSC)
 
-      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler;
+      TIM.PSC.PSC := ADC_PWM_TIM_Prescaler - 1;
 
       --  TIMx auto-reload register (TIMx_ARR)
 
